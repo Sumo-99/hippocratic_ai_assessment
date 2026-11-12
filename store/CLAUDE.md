@@ -21,6 +21,7 @@ This folder holds the working memory for building the storyteller skeleton. Each
 | `07_live_runs/` | Task 7 | haiku | 06 |
 | `08_auto_review/` | Wave 5 | opus | — |
 | `09_human_review/` | Wave 6 | (me + user) | — |
+| `09_simplify/` | Author-requested trim to one draft, no LLM comparison | (me) | — |
 | `10_commit_pr/` | Waves 6–7 commit/push | (me) | — |
 
 ## Status

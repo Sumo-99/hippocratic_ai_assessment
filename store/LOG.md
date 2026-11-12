@@ -24,3 +24,4 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-12 | 09_human_review | fixed | extract.md: family/relationship words are not character names (+ guard test, 79 passed); lenient judge logged in docs/OPEN_QUESTIONS.md eval backlog
 2026-11-12 | 08_auto_review | dispatched | opus read-only reviewer
 2026-11-12 | 08_auto_review | reviewed | 11 findings: fixed 8, #10 pre-fixed, #7 accepted, #8 deferred; 84 passed
+2026-11-12 | 09_simplify | handoff | trimmed to one draft + code-only guard; full build kept on skeleton_extensive; 67 passed
