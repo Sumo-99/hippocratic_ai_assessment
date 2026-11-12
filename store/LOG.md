@@ -21,3 +21,4 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-12 | 06_docs | handoff | ARCHITECTURE + OPEN_QUESTIONS (16 entries) + README section; mermaid unvalidated
 2026-11-12 | 07_live_runs | live-call | 3 runs, total $0.0221, all exit 0
 2026-11-12 | wave4 | reviewed | approved both; flagged lenient judge + 'my son' as named character
+2026-11-12 | 09_human_review | fixed | extract.md: family/relationship words are not character names (+ guard test, 79 passed); lenient judge logged in docs/OPEN_QUESTIONS.md eval backlog
