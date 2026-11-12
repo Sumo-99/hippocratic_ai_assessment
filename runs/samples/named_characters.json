@@ -1,0 +1,485 @@
+{
+  "request": "a story about Alice and her cat Bob",
+  "gate": {
+    "reason": "A gentle bedtime story about a girl named Alice and her cat Bob is wholesome and easy to write in a child-safe way. It clearly asks for a story.",
+    "safe": true,
+    "relevant": true
+  },
+  "extraction": {
+    "characters": [
+      "Alice",
+      "Bob"
+    ],
+    "setting": null,
+    "premise": null,
+    "mood": null,
+    "worry": null,
+    "category": null
+  },
+  "branch": "breadth",
+  "premises": [
+    {
+      "premise": "Alice and Bob sit by the crackling fireplace in their cozy cottage, sharing warm cocoa and counting the stars through the window before they tuck themselves into their blankets for the night.",
+      "category": "cozy",
+      "characters": [
+        "Alice",
+        "Bob"
+      ],
+      "setting": "A cozy cottage with a crackling fireplace, invented for the story"
+    },
+    {
+      "premise": "Alice and Bob set off with a map to find the lost golden acorn for their grandmother, following a winding path through the meadow and over a little wooden bridge, and they bring it safely back home just as the moon rises.",
+      "category": "adventure",
+      "characters": [
+        "Alice",
+        "Bob"
+      ],
+      "setting": "A sunny meadow, a winding path, and their home at the edge of the woods"
+    },
+    {
+      "premise": "Bob insists that his pet turtle can fly if he just flaps his arms hard enough, so Alice helps him build a paper cape and together they giggle through a hilarious attempt that ends in a soft pile of leaves.",
+      "category": "silly",
+      "characters": [
+        "Alice",
+        "Bob"
+      ],
+      "setting": "A backyard garden with a big pile of autumn leaves"
+    }
+  ],
+  "drafts": [
+    {
+      "index": 0,
+      "spec": {
+        "category": "cozy",
+        "characters": [
+          "Alice",
+          "Bob"
+        ],
+        "setting": "A cozy cottage with a crackling fireplace, invented for the story",
+        "premise": "Alice and Bob sit by the crackling fireplace in their cozy cottage, sharing warm cocoa and counting the stars through the window before they tuck themselves into their blankets for the night.",
+        "mood": null,
+        "worry": null,
+        "named_characters": true
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "The Cocoa Night\n\nAlice and Bob lived in a small cottage at the edge of the woods. Every night, they had a special routine. Tonight was no different.\n\nFirst, Bob filled the little copper pot with milk. He set it on the stove. The milk began to hum softly. Hmmm, hmmm, it went.\n\nNext, Alice spooned in the cocoa powder. Plip, plop, went the spoon. The kitchen smelled sweet and warm, like chocolate and cinnamon.\n\nBob stirred slowly. Round and round the spoon went. Round and round. The milk turned soft and brown.\n\nThen they poured the cocoa into two mugs. Each mug had a painted blue flower on the side. Alice blew gently across the top of hers. Whoosh, whoosh, went her breath, and the steam curled up like a little ribbon.\n\n\"Shall we go sit by the fire?\" asked Bob.\n\n\"Yes, let's,\" said Alice.\n\nThey walked slowly into the front room. The fireplace crackled. Snap went a small log. Pop went a spark. The orange light danced on the wooden walls and across the soft rug.\n\nAlice sat in the big green chair. Bob sat in the rocking chair beside her. The chair creaked, creak, creak, as he rocked gently back and forth.\n\nThey sipped their cocoa. It was warm and sweet and just the right temperature.\n\nThen Alice looked toward the window. \"Look, Bob. The sky is getting dark.\"\n\nBob turned his head. Outside, the sky was a deep, quiet blue. One small star was shining. Then another. Then another.\n\n\"One,\" whispered Alice.\n\n\"Two,\" whispered Bob.\n\n\"Three,\" said Alice, and she smiled. \"The stars are saying goodnight to us.\"\n\nThey counted together, softly, slowly. Five stars. Seven stars. Eleven. The sky filled up like a blanket of tiny lights.\n\n\"I think the moon is waving hello,\" said Bob, pointing at a round, pale glow low over the trees.\n\n\"Hello, moon,\" said Alice with a yawn.\n\nThe fire crackled a little less now. Snap. Pop. Then only a soft, gentle hiss.\n\nBob finished his cocoa. He set his mug on the table. Clink, went the mug. Alice set hers down too. Clink.\n\nThey stood up slowly. Their feet were warm in their fuzzy socks. They walked down the hall, past the picture of the old oak tree, and into their bedroom.\n\nAlice pulled back the quilt. It was patterned with little yellow moons. Bob pulled back his side too.\n\nThey climbed in. The mattress sighed, sooo, as it took their weight. Alice pulled the blanket up to her chin. Bob tucked it around her feet.\n\n\"Goodnight, cottage,\" whispered Alice.\n\n\"Goodnight, fire,\" whispered Bob.\n\nFrom the front room came the faintest sound. A soft tick, tick, as the last embers settled. The house hummed quietly, like a lullaby no one had to sing.\n\nOutside, the stars kept watch. The moon drifted slowly across the sky.\n\nAlice's eyes grew heavy. Bob's breathing slowed, in and out, in and out.\n\nWarm. Safe. Quiet.\n\nThe cottage was still. The stars were still. And Alice and Bob drifted softly off to sleep.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "No violence, injury, danger, scary images, or unsafe acts. Fire is only a crackling fireplace with a small log and soft embers settling; the cocoa and stove are handled calmly with no unsafe act a child would copy. Characters stay at home.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final third: 'The fire crackled a little less now. Snap. Pop. Then only a soft, gentle hiss.' 'Warm. Safe. Quiet.' 'Alice and Bob drifted softly off to sleep.' Ends calm and sleepy with no cliffhanger.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "Alice and Bob are named by the user and are central throughout; the cottage and crackling fireplace setting appears as requested.",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Names stay Alice and Bob; the cottage, fireplace, green chair, rocking chair and bedroom remain consistent; stars and moon behave consistently; cocoa steps follow logically.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Simple words and short sentences throughout, with sound words like 'Plip, plop', 'Snap', 'Pop', 'creak, creak' that are easy and fun to read aloud.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: the nightly cocoa routine. Goal: sit by the fire and enjoy cocoa. Attempt/moment: counting stars and greeting the moon. Resolution: bed and sleep. The arc is intentionally gentle with no conflict, as the category asks, so it has a clear beginning, middle and end.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Specific vivid details: 'copper pot', 'painted blue flower on the side', 'steam curled up like a little ribbon', 'quilt patterned with little yellow moons', 'fuzzy socks'. Characters make choices such as counting stars together and waving to the moon.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "Premise honored: Alice and Bob sit by the crackling fireplace, share warm cocoa, count stars through the window, then tuck into blankets. Mood was not specified, so the cozy category tone is kept.",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "Routine with clear steps: yes (milk, cocoa, stir, pour, sit, bed). No real conflict or suspense: yes. Soothing sensory details: yes (smell of chocolate and cinnamon, warm light, creaking chair). Small gentle realization or happy moment: yes ('The stars are saying goodnight to us', the smile). Calm throughout and quietest at the end: yes.",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 509,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        }
+      ],
+      "comparisons": [],
+      "kept_round": 0
+    },
+    {
+      "index": 1,
+      "spec": {
+        "category": "adventure",
+        "characters": [
+          "Alice",
+          "Bob"
+        ],
+        "setting": "A sunny meadow, a winding path, and their home at the edge of the woods",
+        "premise": "Alice and Bob set off with a map to find the lost golden acorn for their grandmother, following a winding path through the meadow and over a little wooden bridge, and they bring it safely back home just as the moon rises.",
+        "mood": null,
+        "worry": null,
+        "named_characters": true
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "The Golden Acorn\n\nAlice and Bob lived in a small yellow house at the edge of the woods. Every morning they looked out at the sunny meadow.\n\nOne sunny morning, Grandma came in with a sad face. \"I lost my golden acorn,\" she said. \"It was my lucky charm. Can you find it for me?\"\n\nAlice clapped her hands. \"We will find it, Grandma!\"\n\nBob unfolded an old paper map. \"Here is the path,\" he said. \"It goes across the meadow, past the big oak, and over the wooden bridge.\"\n\nSo they set off. Alice carried a basket. Bob carried a jar of water. The grass was tall and green, and it tickled their knees.\n\nSoon they came to the first problem. The winding path had a gap. A little stream ran right across it.\n\n\"How do we cross?\" asked Bob.\n\nAlice looked around. She saw a long, flat log lying by the water. \"Let's push it across,\" she said. \"Then we can walk on it.\"\n\nThey pushed together. Push, push, push. The log slid over the stream with a soft plop. Alice went first, holding her arms out wide for balance. Bob followed, giggling. They were across!\n\nThey walked on. Bees buzzed past. A butterfly landed on Alice's sleeve and then flew away.\n\nThen they met a small brown rabbit sitting by the path. Its ears drooped, and it looked worried.\n\n\"Hello,\" said Alice gently. \"Why do you look so sad?\"\n\n\"I dropped my shiny pebble in the bushes,\" said the rabbit. \"I cannot reach it.\"\n\nBob pushed aside the leaves. There it was, glinting in the sun. He handed it over carefully.\n\nThe rabbit hopped with joy. \"Thank you! Now you may take my shortcut through the clover.\" And off it went, showing them a path that was much quicker.\n\nAt last they reached the big oak tree. Its branches were wide and its shade was cool. And there, under a fat root, something gleamed.\n\n\"The golden acorn!\" shouted Alice.\n\nBob picked it up and held it high. It shone like a tiny sun.\n\nBut the wooden bridge was next, and it creaked. The planks were old. Alice took one careful step at a time. Bob followed, counting the planks under his breath. \"One, two, three, four\u2026\" They reached the other side safely.\n\nNow the sun was going down. The sky turned orange and then pink. The grass grew quiet, and the crickets began to sing.\n\nAlice and Bob walked slowly home along the winding path. Their feet were tired. Their basket was light. Their hearts were full.\n\nGrandma was waiting on the porch. Her eyes sparkled when she saw the acorn. \"You found it!\" she whispered. She tucked it safely into her apron pocket.\n\nThen the moon rose over the meadow, round and silver.\n\nAlice yawned. Bob yawned too.\n\n\"Goodnight, meadow,\" said Alice softly.\n\n\"Goodnight, golden acorn,\" said Bob.\n\nAnd the two of them climbed into bed, warm and safe, and drifted off to sleep.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "Pushing a log across a stream, but done together with Alice going first holding arms wide; crossing an old creaky bridge one step at a time with Bob counting planks. No violence or real danger; the only risk is handled carefully and no grown-up is needed for these mild tasks.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final third: 'Now the sun was going down. The sky turned orange and then pink. The grass grew quiet, and the crickets began to sing.' Ends with 'Their feet were tired', moon rising, 'Goodnight, meadow', 'drifted off to sleep'.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "Alice and Bob are named and central throughout; the sunny meadow, winding path, and home at the edge of the woods all appear ('a small yellow house at the edge of the woods', 'the sunny meadow', 'winding path').",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Names stay Alice and Bob throughout; the log, bridge, and acorn behave consistently; the path is consistently winding and leads home; the rabbit's shortcut is an introduced detail, not a contradiction.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Simple words and short sentences ('Push, push, push.', 'They were across!'), easy to read aloud, with repetition and sound words suited to ages 5 to 10.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: Grandma loses the golden acorn. Goal: find it. Attempts: crossing the stream with the log, helping the rabbit find its pebble. Resolution: acorn found at the oak, brought home safely.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Alice chooses to push the log; Bob chooses to help the rabbit by pushing aside leaves; specific details like 'it tickled their knees', 'shone like a tiny sun', 'counting the planks under his breath'.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "N/A",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "Goal stated early ('I lost my golden acorn... Can you find it for me?'). Obstacles: stream gap (overcome by Alice's log idea), sad rabbit's lost pebble (overcome by Bob), creaking bridge (overcome by careful steps). Character returns home before the end ('Alice and Bob walked slowly home'). Excitement fades in the final third with a calm ending.",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 498,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        }
+      ],
+      "comparisons": [],
+      "kept_round": 0
+    },
+    {
+      "index": 2,
+      "spec": {
+        "category": "silly",
+        "characters": [
+          "Alice",
+          "Bob"
+        ],
+        "setting": "A backyard garden with a big pile of autumn leaves",
+        "premise": "Bob insists that his pet turtle can fly if he just flaps his arms hard enough, so Alice helps him build a paper cape and together they giggle through a hilarious attempt that ends in a soft pile of leaves.",
+        "mood": null,
+        "worry": null,
+        "named_characters": true
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "Bob and the Flying Turtle\n\nBob had a turtle named Pickle. Pickle was small, green, and very slow.\n\n\"Pickle can fly,\" Bob said one sunny morning. \"I just have to flap his arms hard enough.\"\n\nAlice giggled. \"Turtles don't have arms to flap, Bob. They have flippers!\"\n\n\"Then we will flap the flippers,\" said Bob.\n\nAlice looked at Pickle. Pickle looked at the grass. Nobody was sure what Pickle was thinking.\n\n\"Let's make him a cape first,\" said Alice. \"Every flying friend needs a cape.\"\n\nSo they found a big sheet of paper and a box of crayons. Alice drew stars. Bob drew a lightning bolt, which was really a squiggle. They taped the cape to Pickle's shell. It crinkled every time he moved.\n\n\"Ready for takeoff!\" shouted Bob.\n\nBob lifted Pickle up high. Then he flapped Pickle's flippers up and down, up and down, flip, flap, flip, flap.\n\nPickle did not fly. Pickle wiggled. His cape wiggled too. Then he slipped out of Bob's hands and went *plop* onto the grass.\n\n\"Hmm,\" said Bob. \"He needs a bigger flap!\"\n\nAlice laughed so hard she had to sit down. \"Maybe Pickle needs a rocket,\" she said.\n\nSo they built a rocket out of a cardboard tube, two egg cartons, and a jar lid. It wobbled. It squeaked. It looked very important.\n\n\"Blast off!\" cried Bob.\n\nThey put Pickle in the rocket. Alice pushed. Bob pushed. Then they both pushed at once, *WHOOSH*, and the rocket rolled right off the table, *bump, bump, bump*, down the slope of the garden, and into a big pile of crunchy autumn leaves.\n\n*Crunch! Swish! Splash!*\n\nLeaves flew up everywhere. Red leaves, gold leaves, brown leaves that tickled their noses. Bob and Alice tumbled into the pile too. Then they all popped out, laughing.\n\nPickle poked his head out of the leaves. He had a leaf on his nose and a star on his cape. He blinked slowly.\n\n\"Pickle flew!\" Bob shouted. \"Sort of!\"\n\n\"He flew the length of a garden,\" said Alice, giggling. \"That counts.\"\n\nThey rolled in the leaves for a while, laughing until their tummies hurt. Their cheeks went pink. Pickle sat very still, enjoying his soft, crunchy nest.\n\nThen the wind blew gently through the trees. The laughing grew quieter. The leaves rustled softly, *shhh, shhh*.\n\nBob yawned. \"Pickle can fly tomorrow,\" he said sleepily.\n\n\"Maybe,\" said Alice, yawning too. She tucked a leaf under Pickle's shell like a little blanket.\n\nThe sun went low and golden. The garden was calm and still. Bob and Alice lay back in the leaves, and Pickle closed his eyes.\n\nGoodnight, Bob. Goodnight, Alice. Goodnight, Pickle.\n\nShhh, shhh, went the leaves.\n\nThe end.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "Pickle is dropped and slips out of hands onto grass, rocket rolls down a slope into leaves; mild, no injury, no real danger. Tumbling into leaves is soft.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final third: 'The laughing grew quieter', 'Bob yawned... sleepy', 'The sun went low and golden', 'Shhh, shhh, went the leaves.' Ends calm and sleepy.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "Bob, Alice named and central; setting is a backyard garden with a pile of autumn leaves ('a big pile of crunchy autumn leaves', 'the garden').",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Pickle is a turtle with flippers, consistently. The cape is taped to the shell; leaf on nose and star on cape are consistent. Rocket rolls off table and down slope consistently. No contradictions found.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Simple words and short sentences throughout ('Pickle was small, green, and very slow.'), with sound words easy to read aloud.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: Bob claims Pickle can fly. Attempts: cape and flapping, then rocket. Resolution: leaf pile landing, 'Pickle flew! Sort of!', sleepy ending.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Specific details: 'a squiggle' lightning bolt, 'Nobody was sure what Pickle was thinking', 'egg cartons and a jar lid' rocket that 'looked very important'. Characters make choices (build cape, build rocket).",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "Premise: Bob insists turtle can fly by flapping, Alice helps build paper cape, they giggle through attempt ending in soft leaf pile. The cape is paper, flapping attempt happens, giggling and soft leaf landing occur. Mood not specified; N/A to mood.",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "One ridiculous wish: Pickle flying by flapping. Three escalating attempts: cape/flapping, flapping harder, rocket. Playful sounds: plop, crinkled, WHOOSH, bump, Crunch, Swish, Splash, shhh. Humor not from meanness or harm (Pickle is fine). Silliness fades to sleepy ending.",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 448,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        }
+      ],
+      "comparisons": [],
+      "kept_round": 0
+    }
+  ],
+  "selection": {
+    "rule": "survivors",
+    "survivors": [
+      0,
+      1,
+      2
+    ],
+    "pairs": [
+      {
+        "x": 0,
+        "y": 1,
+        "verdict": "x"
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "verdict": "x"
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "verdict": "tie"
+      }
+    ],
+    "wins": {
+      "0": 2,
+      "1": 0,
+      "2": 0
+    },
+    "chosen": 0
+  },
+  "final": {
+    "status": "story",
+    "source": "draft",
+    "draft_index": 0,
+    "round": 0,
+    "all_passed": true,
+    "hard_failures": [],
+    "soft_failures": []
+  },
+  "latency_budget_exceeded": false,
+  "usage": {
+    "calls": 15,
+    "prompt_tokens": 29933,
+    "completion_tokens": 7396,
+    "by_stage": {
+      "gate": {
+        "calls": 1,
+        "prompt_tokens": 745,
+        "completion_tokens": 73,
+        "cost_usd": 0.000111
+      },
+      "extract": {
+        "calls": 1,
+        "prompt_tokens": 1168,
+        "completion_tokens": 45,
+        "cost_usd": 0.0001393
+      },
+      "brainstorm": {
+        "calls": 1,
+        "prompt_tokens": 971,
+        "completion_tokens": 374,
+        "cost_usd": 0.0002841
+      },
+      "generate": {
+        "calls": 3,
+        "prompt_tokens": 2865,
+        "completion_tokens": 3152,
+        "cost_usd": 0.0018625
+      },
+      "judge": {
+        "calls": 3,
+        "prompt_tokens": 8534,
+        "completion_tokens": 2802,
+        "cost_usd": 0.0022544
+      },
+      "compare": {
+        "calls": 6,
+        "prompt_tokens": 15650,
+        "completion_tokens": 950,
+        "cost_usd": 0.00204
+      }
+    }
+  },
+  "timings": {
+    "gate": 1.9051548750139773,
+    "extract": 1.5205277500208467,
+    "brainstorm": 2.815515166032128,
+    "draft_2": 12.080570250051096,
+    "draft_0": 12.37879020802211,
+    "draft_1": 12.515309791080654,
+    "drafts": 12.520442415960133,
+    "selection": 2.4337327500106767,
+    "total": 21.19579899997916
+  },
+  "calls": [
+    {
+      "stage": "gate",
+      "prompt_tokens": 745,
+      "completion_tokens": 73,
+      "cost_usd": 0.000111,
+      "seconds": 1.905
+    },
+    {
+      "stage": "extract",
+      "prompt_tokens": 1168,
+      "completion_tokens": 45,
+      "cost_usd": 0.0001393,
+      "seconds": 1.519
+    },
+    {
+      "stage": "brainstorm",
+      "prompt_tokens": 971,
+      "completion_tokens": 374,
+      "cost_usd": 0.0002841,
+      "seconds": 2.815
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 942,
+      "completion_tokens": 990,
+      "cost_usd": 0.0005892,
+      "seconds": 6.846
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 962,
+      "completion_tokens": 1066,
+      "cost_usd": 0.0006292,
+      "seconds": 6.955
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 961,
+      "completion_tokens": 1096,
+      "cost_usd": 0.0006441,
+      "seconds": 7.075
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 2865,
+      "completion_tokens": 912,
+      "cost_usd": 0.0007425,
+      "seconds": 5.122
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 2884,
+      "completion_tokens": 987,
+      "cost_usd": 0.0007819,
+      "seconds": 5.301
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 2785,
+      "completion_tokens": 903,
+      "cost_usd": 0.00073,
+      "seconds": 5.662
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2669,
+      "completion_tokens": 142,
+      "cost_usd": 0.0003379,
+      "seconds": 1.638
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2593,
+      "completion_tokens": 146,
+      "cost_usd": 0.0003323,
+      "seconds": 1.73
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2593,
+      "completion_tokens": 188,
+      "cost_usd": 0.0003533,
+      "seconds": 1.99
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2563,
+      "completion_tokens": 166,
+      "cost_usd": 0.0003393,
+      "seconds": 2.245
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2563,
+      "completion_tokens": 137,
+      "cost_usd": 0.0003248,
+      "seconds": 2.356
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2669,
+      "completion_tokens": 171,
+      "cost_usd": 0.0003524,
+      "seconds": 2.428
+    }
+  ],
+  "total_cost_usd": 0.006691
+}

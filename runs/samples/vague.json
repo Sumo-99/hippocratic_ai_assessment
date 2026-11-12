@@ -1,0 +1,567 @@
+{
+  "request": "tell me a story",
+  "gate": {
+    "reason": "The request asks for a story, which is a benign bedtime request that can be fulfilled safely.",
+    "safe": true,
+    "relevant": true
+  },
+  "extraction": {
+    "characters": [],
+    "setting": null,
+    "premise": null,
+    "mood": null,
+    "worry": null,
+    "category": null
+  },
+  "branch": "breadth",
+  "premises": [
+    {
+      "premise": "A little owl named Mabel likes to wrap herself in a patchwork quilt while the moon rises over the quiet orchard. Each night she counts the stars from her window seat, and by the time she reaches ten, her eyes are heavy and her blanket feels as warm as a hug.",
+      "category": "cozy",
+      "characters": [
+        "Mabel the owl"
+      ],
+      "setting": "A tall oak tree house at the edge of a quiet orchard"
+    },
+    {
+      "premise": "Tomas the young fox sets out to find the lost silver whistle his grandmother used to call the evening birds home. He follows a winding path past the reed pond and the hill of wildflowers, and he finds the whistle tucked under a mossy stone before the stars come out and he hurries back to the den.",
+      "category": "adventure",
+      "characters": [
+        "Tomas the young fox",
+        "Grandmother Fern the fox"
+      ],
+      "setting": "A meadow with a reed pond, a wildflower hill, and a cozy fox den"
+    },
+    {
+      "premise": "Pip the hedgehog decides he wants to be the tallest hedgehog in the whole garden, so he tries stacking up teacups, flower pots, and one very surprised toad. In the end he discovers that the best view comes from sitting down with his friends and watching the clouds drift past.",
+      "category": "silly",
+      "characters": [
+        "Pip the hedgehog",
+        "Hattie the toad"
+      ],
+      "setting": "A sunny backyard garden full of flower pots and tea tables"
+    }
+  ],
+  "drafts": [
+    {
+      "index": 0,
+      "spec": {
+        "category": "cozy",
+        "characters": [
+          "Mabel the owl"
+        ],
+        "setting": "A tall oak tree house at the edge of a quiet orchard",
+        "premise": "A little owl named Mabel likes to wrap herself in a patchwork quilt while the moon rises over the quiet orchard. Each night she counts the stars from her window seat, and by the time she reaches ten, her eyes are heavy and her blanket feels as warm as a hug.",
+        "mood": null,
+        "worry": null,
+        "named_characters": false
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "The Owl Who Counted Stars\n\nHigh in an old oak tree, at the edge of a quiet orchard, lived a little owl named Mabel.\n\nEvening came softly. The sun slipped down behind the apple trees. The sky turned from gold to pink, and then to a deep, soft blue.\n\nMabel fluffed her feathers. \"It is time,\" she whispered.\n\nShe climbed down from her high branch, one careful step at a time. Her round house was warm inside. It smelled of cedar wood and dried lavender.\n\nFirst, she made her cocoa. She poured warm milk into a small blue cup. She stirred it three times, slowly. Clink, clink, clink went the spoon. Then she sipped. It tasted sweet and creamy.\n\nNext, she tidied her shelf. She set her wooden bird a little straighter. She patted her soft pillow twice. Pat, pat. Then she opened the window just a crack, so the cool night air could drift in.\n\nNow came her favorite part. She pulled her patchwork quilt from the hook by the door. It was made of many squares. There were red squares, green squares, and squares the color of butter. Each one had been stitched by hand, long ago, by her grandmother.\n\nMabel wrapped the quilt around her shoulders. It felt heavy and warm, like a sleepy cat curled up in her lap.\n\nShe climbed onto the window seat. The wood was smooth under her feet. Outside, the orchard was quiet. The apple trees stood still, like friendly giants resting their arms.\n\nFrom far away came a soft sound. Hoo. Hoo. It was another owl, calling goodnight to the world.\n\nMabel smiled. \"Goodnight, Owl,\" she called back, very softly.\n\nThen she looked up. One small star blinked into view above the orchard.\n\n\"One,\" Mabel counted quietly.\n\nAnother star appeared, bright and faraway. \"Two.\"\n\nThen a third, just over the tallest apple tree. \"Three.\"\n\nThe stars came out one by one, as if they were waking up for the night. \"Four. Five.\"\n\nA gentle breeze moved through the leaves. Whish, whish, it sang, like a lullaby being hummed. \"Six.\"\n\nThe moon rose slowly over the hill. It was round and silver and calm. It looked down at Mabel as if to say hello. \"Seven,\" she whispered. \"Hello, Moon.\"\n\nThe moon glowed a little brighter, just for her.\n\n\"Eight,\" Mabel murmured. Her eyes were getting heavy now. Her blinks were getting slower.\n\n\"Nine.\" The quilt felt warmer. The window seat felt softer. The air smelled of apples and lavender and night.\n\n\"Ten,\" Mabel breathed, and her head drooped gently to one side.\n\nShe did not finish counting the rest. The stars kept shining anyway, every one of them, keeping watch over the orchard.\n\nMabel tucked her feet under her quilt. She rested her cheek against the cool glass. The last of the cocoa warmed her tummy.\n\nHoo, called the far-off owl, very softly now. Hoo.\n\nMabel's eyes closed. Her feathers rose and fell, rose and fell, slow and steady. The quilt hugged her close, square by square.\n\nOutside, the moon kept its quiet watch, and the stars twinkled on, and the orchard slept.\n\nGoodnight, little owl.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "No violence, injury, danger, or unsafe acts. Mabel climbs down her branch 'one careful step at a time' (climbing done carefully, indoors/home setting), opens a window 'just a crack', and sits on a window seat near the glass. Nothing a child could copy dangerously.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final third slows down: 'Her eyes were getting heavy now. Her blinks were getting slower.', 'her head drooped gently', 'Mabel's eyes closed. Her feathers rose and fell... slow and steady', ends with 'Goodnight, little owl.' No cliffhanger or open question.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "Named character Mabel the owl is central and keeps her name; setting is a tall oak tree house at the edge of a quiet orchard ('High in an old oak tree, at the edge of a quiet orchard'). Note the setting is a round house in an oak tree, which matches.",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Facts stay consistent: the window is opened and the window seat is used throughout, the quilt is on the hook then wrapped around her, the count goes one to ten with no skipped numbers, the moon and stars stay in the night sky. No contradictions found.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Simple words and short sentences ('Clink, clink, clink went the spoon.', 'Pat, pat.', 'Hoo. Hoo.'), onomatopoeia that is fun to read aloud. A few words like 'lullaby', 'murmured', 'drooped' are slightly advanced but understandable from context.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: Mabel lives in her oak tree house and it is evening. Routine/goal: she makes cocoa, tidies up, wraps in her quilt, counts stars. Resolution: she falls asleep with the orchard keeping watch. The arc is a gentle, intentionally plotless bedtime arc, which fits the cozy category.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Specific vivid details: 'cedar wood and dried lavender', 'a small blue cup', 'squares the color of butter' stitched by grandmother, 'The apple trees stood still, like friendly giants resting their arms.' Mabel makes choices (cocoa, tidying, greeting the moon and the other owl).",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "Premise honored: Mabel wraps herself in a patchwork quilt, sits in the window seat as the moon rises over the orchard, counts stars each night and falls asleep around ten with a warm, hug-like blanket ('The quilt hugged her close'). Mood not specified, so it is calm and cozy.",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "Routine with clear steps: cocoa, tidy shelf, open window, quilt, window seat, count stars (met). No real conflict or suspense (met). Specific soothing sensory details: cedar, lavender, cocoa, breeze 'Whish, whish', apples (met). Small gentle realization or happy moment: the moon glows brighter 'just for her' and Mabel says goodnight (met). Calm throughout and quietest at the end (met).",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 524,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        }
+      ],
+      "comparisons": [],
+      "kept_round": 0
+    },
+    {
+      "index": 1,
+      "spec": {
+        "category": "adventure",
+        "characters": [
+          "Tomas the young fox",
+          "Grandmother Fern the fox"
+        ],
+        "setting": "A meadow with a reed pond, a wildflower hill, and a cozy fox den",
+        "premise": "Tomas the young fox sets out to find the lost silver whistle his grandmother used to call the evening birds home. He follows a winding path past the reed pond and the hill of wildflowers, and he finds the whistle tucked under a mossy stone before the stars come out and he hurries back to the den.",
+        "mood": null,
+        "worry": null,
+        "named_characters": false
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "Tomas and the Silver Whistle\n\nIn a green meadow, where the grass grew tall, there was a small den under an old oak tree. Tomas the young fox lived there with his grandmother.\n\nGrandmother Fern had a silver whistle. Every evening she blew it, and the birds flew home to roost. Tiny chirps came from every bush.\n\nOne day, the whistle was gone.\n\n\"Oh dear,\" said Grandmother Fern. She looked under her blanket. She looked behind the teapot. \"I think I dropped it when I went to pick berries.\"\n\nTomas puffed out his chest. \"Don't worry, Grandma. I will find it for you!\"\n\nGrandmother Fern smiled. \"Thank you, my brave little fox. Be careful, and come back before the stars come out.\"\n\nTomas trotted out of the den. The sun was warm on his orange fur. He walked along the path toward the reed pond.\n\nThe reeds swayed and whispered. Tomas stopped at the edge of the water. He saw ducks paddling in circles.\n\n\"Excuse me,\" Tomas called. \"Have you seen a silver whistle?\"\n\nA duck named Pip turned around. \"We saw something shiny near the mud. But the water is too deep for a fox to cross.\"\n\nTomas looked at the water. It was deep, but a row of flat stones poked up in a line. They looked like steppingstones.\n\n\"I can hop from stone to stone,\" Tomas said. \"I will go slowly.\"\n\nHe took one careful step. Then another. Then a big hop to the last stone. He landed with a soft thump on the other side.\n\n\"Hooray!\" quacked Pip. \"You did it!\"\n\nTomas searched the muddy bank. But there was no whistle. Only a shiny pebble.\n\nHe sighed. Then he remembered what Grandma always said: \"When you are stuck, look up and see the path.\"\n\nTomas looked up. Far away, on a hill, he saw a field of wildflowers. Something silver glinted in the grass.\n\nTomas climbed the hill one paw at a time. The flowers tickled his nose. Purple, yellow, and pink petals swayed in the breeze.\n\nBut near the top, he came to a patch of tangled thorny vines. A little rabbit was stuck beneath them.\n\n\"Help, please!\" squeaked the rabbit. \"I went looking for clover, and now I cannot get out.\"\n\nTomas thought hard. He nosed the vines gently to the left, then to the right. He pulled one loose strand at a time, very softly.\n\n\"There you go,\" said Tomas. \"Easy does it.\"\n\nThe rabbit hopped free. \"Thank you, kind fox! I am Clover. Let me help you look.\"\n\nTogether they searched the hilltop. Clover spotted it first. Tomas saw the silver shine poking out from under a mossy stone.\n\nHe pulled it out gently with his teeth. The whistle was cool and smooth.\n\n\"We found it!\" cheered Clover.\n\nTomas and Clover walked back down the hill. The sky turned peach and then soft blue. Golden light faded from the meadow.\n\nThey passed the reed pond. Pip the duck waved a wing. The frogs began to hum a sleepy song.\n\nTomas crept into the den. Grandmother Fern sat in her rocking chair, her eyes bright.\n\n\"You found it!\" she whispered.\n\nTomas held up the whistle. \"I did, Grandma. And I made a friend too.\"\n\nGrandmother Fern hugged him close. \"You are a good fox, Tomas.\"\n\nShe tucked a warm blanket around him. The den smelled of pine and clover. Outside, the last birds settled into their nests.\n\nGrandma did not blow the whistle tonight. The birds were already home.\n\nTomas yawned a big, wide yawn. His eyes grew heavy.\n\n\"Goodnight, Grandma,\" he murmured.\n\n\"Goodnight, little fox,\" said Grandmother Fern softly.\n\nAnd the meadow grew quiet, and Tomas fell fast asleep.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "Tomas hops across deep water on flat stones, a fox wanders off alone along a path, and he climbs a hill and pulls loose thorny vines. No injury or scary images; the water crossing is done alone without a grown-up, which is a copyable unsafe act.",
+                "passed": false,
+                "fix": "In the reed pond paragraph, have Tomas call for Grandma or another grown-up before crossing, or remove the stepping-stone crossing and have him walk around the pond instead."
+              },
+              "wind_down": {
+                "evidence": "The final third (from 'The sky turned peach' onward) slows down, the den is cozy, the frogs hum a sleepy song, and it ends with 'Tomas fell fast asleep.'",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "Tomas the young fox and Grandmother Fern the fox are named, central, and keep their names. The whistle is the requested silver whistle, the meadow and reed pond and wildflower hill and den all appear.",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Names, the whistle, the evening return of birds, and the setting remain consistent. Grandma 'did not blow the whistle tonight' is explained by the birds already being home.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Simple words and short sentences throughout, such as 'Tomas puffed out his chest' and 'Easy does it.' Easy to read aloud.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup (whistle lost), goal (find it), attempts (reed pond, hill, rabbit), resolution (whistle found, return home, sleep).",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Tomas makes choices, such as stepping across the stones carefully and helping the rabbit gently. Vivid details include 'Purple, yellow, and pink petals swayed' and 'The den smelled of pine and clover.'",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "N/A",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "Goal is stated early (paragraph about the lost whistle and Tomas's offer). Obstacles: the reed pond deep water, the thorny vines with the rabbit, and the hill search, each overcome by Tomas's own action. Tomas returns home before the end. Excitement fades in the final third. The first obstacle (crossing the deep water alone) is the safety issue, but the check itself is met.",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 617,
+            "length_ok": true,
+            "hard_failures": [
+              "safety"
+            ],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        },
+        {
+          "round": 1,
+          "text": "Tomas and the Silver Whistle\n\nIn a green meadow, where the grass grew tall, there was a small den under an old oak tree. Tomas the young fox lived there with his grandmother.\n\nGrandmother Fern had a silver whistle. Every evening she blew it, and the birds flew home to roost. Tiny chirps came from every bush.\n\nOne day, the whistle was gone.\n\n\"Oh dear,\" said Grandmother Fern. She looked under her blanket. She looked behind the teapot. \"I think I dropped it when I went to pick berries.\"\n\nTomas puffed out his chest. \"Don't worry, Grandma. I will find it for you!\"\n\nGrandmother Fern smiled. \"Thank you, my brave little fox. Be careful, and come back before the stars come out.\"\n\nTomas trotted out of the den. The sun was warm on his orange fur. He walked along the path toward the reed pond.\n\nThe reeds swayed and whispered. Tomas stopped at the edge of the water. He saw ducks paddling in circles.\n\n\"Excuse me,\" Tomas called. \"Have you seen a silver whistle?\"\n\nA duck named Pip turned around. \"We saw something shiny near the mud. But the water is too deep for a fox to cross.\"\n\nTomas looked at the water. He did not want to get wet and cold. \"I will not cross the water,\" he said. \"I will walk all the way around the pond instead.\"\n\nSo Tomas followed the soft grassy edge, past the tall reeds, all the way around. It took a little while, but he did not mind.\n\nOn the far side, he found Pip waiting by the mud. \"Here is the shiny spot,\" said Pip. \"But it is only a pebble.\"\n\nTomas sighed. Then he remembered what Grandma always said: \"When you are stuck, look up and see the path.\"\n\nTomas looked up. Far away, on a hill, he saw a field of wildflowers. Something silver glinted in the grass.\n\nTomas climbed the hill one paw at a time. The flowers tickled his nose. Purple, yellow, and pink petals swayed in the breeze.\n\nBut near the top, he came to a patch of tangled thorny vines. A little rabbit was stuck beneath them.\n\n\"Help, please!\" squeaked the rabbit. \"I went looking for clover, and now I cannot get out.\"\n\nTomas thought hard. He nosed the vines gently to the left, then to the right. He pulled one loose strand at a time, very softly.\n\n\"There you go,\" said Tomas. \"Easy does it.\"\n\nThe rabbit hopped free. \"Thank you, kind fox! I am Clover. Let me help you look.\"\n\nTogether they searched the hilltop. Clover spotted it first. Tomas saw the silver shine poking out from under a mossy stone.\n\nHe pulled it out gently with his teeth. The whistle was cool and smooth.\n\n\"We found it!\" cheered Clover.\n\nTomas and Clover walked back down the hill. The sky turned peach and then soft blue. Golden light faded from the meadow.\n\nThey passed the reed pond. Pip the duck waved a wing. The frogs began to hum a sleepy song.\n\nTomas crept into the den. Grandmother Fern sat in her rocking chair, her eyes bright.\n\n\"You found it!\" she whispered.\n\nTomas held up the whistle. \"I did, Grandma. And I made a friend too.\"\n\nGrandmother Fern hugged him close. \"You are a good fox, Tomas.\"\n\nShe tucked a warm blanket around him. The den smelled of pine and clover. Outside, the last birds settled into their nests.\n\nGrandma did not blow the whistle tonight. The birds were already home.\n\nTomas yawned a big, wide yawn. His eyes grew heavy.\n\n\"Goodnight, Grandma,\" he murmured.\n\n\"Goodnight, little fox,\" said Grandmother Fern softly.\n\nAnd the meadow grew quiet, and Tomas fell fast asleep.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "Tomas walks around the pond instead of crossing deep water; thorny vines are gently pulled free from a rabbit; no violence, injury, or real danger. He stays in the meadow and returns home before dark.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final third: 'The sky turned peach and then soft blue,' 'The frogs began to hum a sleepy song,' 'the last birds settled into their nests,' 'Tomas yawned a big, wide yawn,' ending 'the meadow grew quiet, and Tomas fell fast asleep.'",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "Tomas the young fox and Grandmother Fern appear, keep their names, and are central; the setting includes the meadow, reed pond, wildflower hill, and den under the oak.",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Grandma's whistle is lost and found under a mossy stone; birds come home at evening; the timeline (sun, peach sky, stars, bedtime) is consistent; the rabbit and duck remain in their places.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Simple vocabulary and short sentences throughout ('Tomas trotted out of the den,' 'Easy does it.'), with a few richer words like 'murmured' and 'tangled' that remain readable aloud for ages 5-10.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: lost whistle in the den. Goal: find it. Attempts: pond detour, climbing hill, freeing Clover. Resolution: whistle found, returned home, and Grandma and Tomas go to sleep.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Tomas chooses to walk around the pond rather than cross cold water, chooses to help the trapped rabbit, and remembers Grandma's advice; specific details like 'purple, yellow, and pink petals' and 'The den smelled of pine and clover.'",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "Premise honored: Tomas sets out to find the lost silver whistle Grandma used to call birds home, follows a path past the reed pond and wildflower hill, finds it under a mossy stone, and hurries back before stars appear. No mood was requested.",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "Goal stated early (finding the whistle). Obstacles: the deep pond, the thorny vines with the trapped rabbit, and the hilltop search (three obstacles, each overcome by Tomas's own actions, with Clover helping only in the search). Tomas returns to the den before the end. Excitement fades in the final third.",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 617,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": "- safety: In the reed pond paragraph, have Tomas call for Grandma or another grown-up before crossing, or remove the stepping-stone crossing and have him walk around the pond instead."
+        }
+      ],
+      "comparisons": [
+        {
+          "round": 1,
+          "rule": "hard_checks",
+          "result": "new",
+          "kept_round": 1
+        }
+      ],
+      "kept_round": 1
+    },
+    {
+      "index": 2,
+      "spec": {
+        "category": "silly",
+        "characters": [
+          "Pip the hedgehog",
+          "Hattie the toad"
+        ],
+        "setting": "A sunny backyard garden full of flower pots and tea tables",
+        "premise": "Pip the hedgehog decides he wants to be the tallest hedgehog in the whole garden, so he tries stacking up teacups, flower pots, and one very surprised toad. In the end he discovers that the best view comes from sitting down with his friends and watching the clouds drift past.",
+        "mood": null,
+        "worry": null,
+        "named_characters": false
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "Pip and the Tallest Hedgehog\n\nPip the hedgehog had a big wish. He wanted to be the tallest hedgehog in the whole garden.\n\n\"I will be the tallest!\" said Pip. He puffed out his prickles and stood up as straight as he could.\n\nBut Pip was short. Very, very short.\n\n\"Hmm,\" said Pip. \"I need to be taller. I know! I will stack things!\"\n\nPip went to the tea table. He carefully stacked one teacup on top of another. Then another. Then another.\n\nClink, clink, clonk!\n\n\"Look at me!\" said Pip. He climbed up, wobble, wobble, wobble. He stood on the very top teacup.\n\nSplish! Splash! The teacups tipped over, and Pip tumbled into a bed of soft moss.\n\n\"Oops,\" said Pip, with a little giggle. \"That was a bumpy try!\"\n\nPip shook off his prickles and tried again. This time he went to the garden shed. He rolled out the flower pots, one by one. Big pots, little pots, round pots, and one shiny pot with a dent.\n\nPip stacked the pots higher and higher. Boing! Boing! Boing!\n\nThen Pip spotted his friend Hattie the toad sitting by the water pond.\n\n\"Hattie!\" called Pip. \"Come and help me be tall!\"\n\nHattie hopped over with a bright, cheery \"Ribbit!\" She hopped right onto the top pot.\n\n\"Okay, Pip,\" said Hattie. \"Now you climb on my back!\"\n\nPip climbed up, up, up, scrambling onto Hattie's bumpy back. He wobbled. He teetered. He stood up on his tiptoes.\n\nWhoosh! Splat! Pots went rolling everywhere, and Pip and Hattie landed in a big, soft heap of grass.\n\n\"Ribbit!\" laughed Hattie. \"That was the silliest thing I have ever seen!\"\n\nPip laughed so hard that his prickles shook. \"Hattie, I'm still not tall,\" he giggled.\n\n\"That's okay,\" said Hattie. \"Let's try one more time. But this time, let's do it together.\"\n\nPip thought for a moment. Then he had a happy idea. He ran off to the garden gate and came back with a big, fluffy pillow from the swing.\n\n\"Ta-da!\" said Pip. \"This is the tallest pillow in the garden!\"\n\nHattie hopped onto the pillow. Pip climbed on top of Hattie. Then Pip stood up very, very carefully.\n\nPuff! The pillow squished and bounced. Pip wobbled, and Hattie wobbled, and they both laughed and laughed until they had to sit down again.\n\nThen Pip and Hattie stopped wobbling. They sat side by side on the soft, cozy pillow. They looked up at the big, wide sky.\n\n\"Pip,\" said Hattie quietly, \"from down here, we can see the clouds.\"\n\nPip looked up. A fluffy white cloud floated slowly past, shaped like a sleepy bear.\n\n\"It's the best view in the garden,\" said Pip. He smiled a big, sleepy smile.\n\nThe garden grew quiet. The breeze whispered through the flowers. The bees hummed softly. The sky turned gold and pink.\n\nHattie yawned a wide, slow yawn. \"Ribbit,\" she sighed. \"I think I'm getting sleepy.\"\n\n\"Me too,\" said Pip, and he curled up his prickles into a round, warm ball. \"Goodnight, Hattie.\"\n\n\"Goodnight, Pip,\" whispered Hattie. \"You're the tallest friend I know.\"\n\nAnd the two friends snuggled down on the pillow, listening to the quiet garden, and drifted off to sleep under the soft, glowing sky.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "Pip climbs stacked teacups and flower pots, and falls into moss and grass. Stacking and climbing are silly but the falls are soft and no one is hurt; no real danger, violence, or scary images.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final third: 'The garden grew quiet... The sky turned gold and pink.' Hattie yawns, Pip curls into a warm ball, they 'drifted off to sleep under the soft, glowing sky.'",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "Pip the hedgehog and Hattie the toad appear, keep their names, and are central throughout. Setting is the garden with flower pots and tea table.",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Pip is short throughout, the teacups, pots, and pillow behave consistently, Hattie hops and stays on the ground. No contradictions noted.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Short sentences and simple words like 'wobble, wobble, wobble', 'Splish! Splash!', 'Boing! Boing!'. Easy to read aloud for ages 5-10.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: Pip wants to be tallest. Attempts: teacups, flower pots, Hattie and a pillow. Resolution: they sit and watch the clouds and fall asleep.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Pip has a clear wish and makes choices (stacking teacups, then pots, then asking Hattie, then fetching the swing pillow). Vivid details like 'one shiny pot with a dent' and 'a fluffy white cloud shaped like a sleepy bear'.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "Premise honored: Pip stacks teacups, flower pots, and a toad, and discovers the best view comes from sitting with friends watching clouds. No mood was specified, so the mood check is skipped.",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "One ridiculous wish (be tallest hedgehog): yes. Three escalating attempts: teacups, pots, Hattie with pillow: yes. Playful language and sound words (Clink, clonk, Splish, Boing, Whoosh, Splat, Puff): yes. No humor from meanness or harm: laughter is shared and gentle: yes. Silliness fades into sleepy ending: yes.",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 540,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        }
+      ],
+      "comparisons": [],
+      "kept_round": 0
+    }
+  ],
+  "selection": {
+    "rule": "survivors",
+    "survivors": [
+      0,
+      1,
+      2
+    ],
+    "pairs": [
+      {
+        "x": 0,
+        "y": 1,
+        "verdict": "x"
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "verdict": "x"
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "verdict": "x"
+      }
+    ],
+    "wins": {
+      "0": 2,
+      "1": 1,
+      "2": 0
+    },
+    "chosen": 0
+  },
+  "final": {
+    "status": "story",
+    "source": "draft",
+    "draft_index": 0,
+    "round": 0,
+    "all_passed": true,
+    "hard_failures": [],
+    "soft_failures": []
+  },
+  "latency_budget_exceeded": false,
+  "usage": {
+    "calls": 17,
+    "prompt_tokens": 37959,
+    "completion_tokens": 10381,
+    "by_stage": {
+      "gate": {
+        "calls": 1,
+        "prompt_tokens": 737,
+        "completion_tokens": 50,
+        "cost_usd": 9.87e-05
+      },
+      "extract": {
+        "calls": 1,
+        "prompt_tokens": 1160,
+        "completion_tokens": 37,
+        "cost_usd": 0.0001345
+      },
+      "brainstorm": {
+        "calls": 1,
+        "prompt_tokens": 967,
+        "completion_tokens": 475,
+        "cost_usd": 0.0003342
+      },
+      "generate": {
+        "calls": 3,
+        "prompt_tokens": 2966,
+        "completion_tokens": 3608,
+        "cost_usd": 0.0021006
+      },
+      "judge": {
+        "calls": 4,
+        "prompt_tokens": 12205,
+        "completion_tokens": 3920,
+        "cost_usd": 0.0031805
+      },
+      "revise": {
+        "calls": 1,
+        "prompt_tokens": 2522,
+        "completion_tokens": 1272,
+        "cost_usd": 0.0008882
+      },
+      "compare": {
+        "calls": 6,
+        "prompt_tokens": 17402,
+        "completion_tokens": 1019,
+        "cost_usd": 0.0022497000000000003
+      }
+    }
+  },
+  "timings": {
+    "gate": 1.9034091249341145,
+    "extract": 1.6006185420555994,
+    "brainstorm": 4.252548332908191,
+    "draft_2": 13.538604625035077,
+    "draft_0": 14.903944749967195,
+    "draft_1": 23.178140375064686,
+    "drafts": 23.18322766700294,
+    "selection": 2.6141267910134047,
+    "total": 33.554470458067954
+  },
+  "calls": [
+    {
+      "stage": "gate",
+      "prompt_tokens": 737,
+      "completion_tokens": 50,
+      "cost_usd": 9.87e-05,
+      "seconds": 1.902
+    },
+    {
+      "stage": "extract",
+      "prompt_tokens": 1160,
+      "completion_tokens": 37,
+      "cost_usd": 0.0001345,
+      "seconds": 1.599
+    },
+    {
+      "stage": "brainstorm",
+      "prompt_tokens": 967,
+      "completion_tokens": 475,
+      "cost_usd": 0.0003342,
+      "seconds": 4.251
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 987,
+      "completion_tokens": 1088,
+      "cost_usd": 0.0006427,
+      "seconds": 7.448
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 994,
+      "completion_tokens": 1230,
+      "cost_usd": 0.0007144,
+      "seconds": 7.804
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 985,
+      "completion_tokens": 1290,
+      "cost_usd": 0.0007435,
+      "seconds": 8.574
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 3062,
+      "completion_tokens": 897,
+      "cost_usd": 0.0007547,
+      "seconds": 5.729
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 3129,
+      "completion_tokens": 879,
+      "cost_usd": 0.0007524,
+      "seconds": 5.042
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 2903,
+      "completion_tokens": 1180,
+      "cost_usd": 0.0008803,
+      "seconds": 7.453
+    },
+    {
+      "stage": "revise",
+      "prompt_tokens": 2522,
+      "completion_tokens": 1272,
+      "cost_usd": 0.0008882,
+      "seconds": 4.649
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 3111,
+      "completion_tokens": 964,
+      "cost_usd": 0.0007931,
+      "seconds": 4.907
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2867,
+      "completion_tokens": 150,
+      "cost_usd": 0.0003617,
+      "seconds": 1.91
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2825,
+      "completion_tokens": 153,
+      "cost_usd": 0.000359,
+      "seconds": 2.043
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2867,
+      "completion_tokens": 206,
+      "cost_usd": 0.0003897,
+      "seconds": 2.089
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2825,
+      "completion_tokens": 175,
+      "cost_usd": 0.00037,
+      "seconds": 2.182
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 3009,
+      "completion_tokens": 162,
+      "cost_usd": 0.0003819,
+      "seconds": 2.232
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 3009,
+      "completion_tokens": 173,
+      "cost_usd": 0.0003874,
+      "seconds": 2.599
+    }
+  ],
+  "total_cost_usd": 0.008986
+}

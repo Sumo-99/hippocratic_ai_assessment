@@ -1,0 +1,478 @@
+{
+  "request": "my son is scared of the dark",
+  "gate": {
+    "reason": "A child who is scared of the dark is a gentle, relevant theme for a bedtime story that can comfort and reassure. It can be written as a calm, kid-safe story about light and bravery.",
+    "safe": true,
+    "relevant": true
+  },
+  "extraction": {
+    "characters": [
+      "my son"
+    ],
+    "setting": null,
+    "premise": null,
+    "mood": null,
+    "worry": "scared of the dark",
+    "category": "comfort"
+  },
+  "branch": "breadth",
+  "premises": [
+    {
+      "premise": "My son is worried that the moon will forget to rise tonight, so he sits by his bedroom window to keep watch. He discovers that the moon always comes up, and he drifts off feeling calm and safe.",
+      "category": "comfort",
+      "characters": [
+        "my son"
+      ],
+      "setting": "his bedroom at the window"
+    },
+    {
+      "premise": "My son feels nervous about his first day at a new school tomorrow. His favorite stuffed rabbit helps him practice saying hello, and by the end he feels brave enough to sleep.",
+      "category": "comfort",
+      "characters": [
+        "my son"
+      ],
+      "setting": "his bedroom"
+    },
+    {
+      "premise": "My son is sad because his best friend moved far away and he misses him. He writes a letter and tucks it under his pillow, and dreams a warm dream about their next adventure together.",
+      "category": "comfort",
+      "characters": [
+        "my son"
+      ],
+      "setting": "his cozy bed at home"
+    }
+  ],
+  "drafts": [
+    {
+      "index": 0,
+      "spec": {
+        "category": "comfort",
+        "characters": [
+          "my son"
+        ],
+        "setting": "his bedroom at the window",
+        "premise": "My son is worried that the moon will forget to rise tonight, so he sits by his bedroom window to keep watch. He discovers that the moon always comes up, and he drifts off feeling calm and safe.",
+        "mood": null,
+        "worry": "scared of the dark",
+        "named_characters": true
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "**The Moon Keeper**\n\nSam was sitting by his bedroom window. His knees were pulled up to his chest. His nose was pressed close to the cool glass.\n\n\"What are you watching for, Sam?\" asked Dad, from the doorway.\n\n\"The moon,\" said Sam. \"What if it forgets to come up tonight?\"\n\nDad came in quietly. He sat down on the edge of the bed. \"That is a big worry,\" he said. \"It makes sense that you feel it.\"\n\nSam nodded. His chin wobbled a little. \"It gets so dark. Then I can't see anything. I feel all alone in the dark.\"\n\n\"Lots of children feel that way,\" said Dad. \"Dark can feel very big when you are small.\"\n\nSam looked out at the sky. It was full of tiny lights. Some were stars. Some were just dim, far-away sparkles.\n\n\"Shall we keep watch together?\" asked Dad. \"Just for a little while.\"\n\nSo they did. Dad put his arm around Sam. They sat together by the window and waited.\n\n\"Let's try something,\" said Dad. \"Breathe in slowly, like you are smelling a flower. Then breathe out slowly, like you are blowing out a candle. Want to try?\"\n\nSam breathed in. He breathed out. \"Again,\" he said softly.\n\nThey breathed together. In, and out. In, and out.\n\nDown the street, a dog barked once and then was quiet. Sam's shoulders came down a little.\n\n\"There,\" whispered Dad. \"Look at that cloud.\"\n\nA soft gray cloud was drifting across the sky. Its edges glowed silver, as if someone had brushed them with light.\n\nThen, slowly, the moon began to rise over the rooftops. It was round and pale and calm. It did not hurry. It did not stop. It simply came up, the way it always had.\n\n\"Oh,\" breathed Sam. \"It came.\"\n\n\"It always comes,\" said Dad. \"Every night. Even when we cannot see it, it is still there, moving along, doing its work.\"\n\nSam smiled. He leaned against Dad's arm. \"I feel a little less scared now.\"\n\n\"That is good,\" said Dad. \"You can keep breathing slowly, whenever you need. And you can look for the moon any time, or just hold your soft bunny close.\"\n\nSam reached for Bunny, who was sitting on the windowsill. He tucked it under his chin.\n\nThe moon climbed higher, soft and steady. Its light spilled gently across the floor and over the blankets.\n\nSam's eyes grew heavy. His breathing slowed. In, and out. In, and out.\n\n\"Good night, moon,\" he mumbled.\n\nDad lifted him gently and carried him to bed. He tucked the blanket up under Sam's chin. Bunny was tucked in right beside him.\n\n\"Good night, Sam,\" whispered Dad. \"The moon is keeping watch. And so am I.\"\n\nThe window glowed silver. The room was quiet. Sam was warm, and safe, and fast asleep.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "No violence, injury, or unsafe acts. Sam sits by the window with Dad nearby; breathing exercise is safe. Dark is handled gently.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final section: 'Sam's eyes grew heavy. His breathing slowed.' Ends with 'Sam was warm, and safe, and fast asleep.' Calm and sleepy.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "No characters or setting were named by the user; the requested character was 'my son (named by the user)' but no name was supplied, and the story names him Sam, so the requirement is N/A.",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Sam's name, Dad, Bunny, and the window setting remain consistent throughout. Moon rising behaves consistently.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Short sentences and simple words like 'wobbled,' 'drifting,' 'silver' are accessible; sentences are easy to read aloud.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: Sam at window worried about moon. Problem: fear of forgetting and being alone in dark. Attempt: Dad's breathing and keeping watch. Resolution: moon rises, Sam sleeps safe.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Specific details like 'nose pressed close to the cool glass,' 'edges glowed silver,' 'Bunny sitting on the windowsill.' Sam makes choices such as asking to breathe again.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "Premise honored: Sam worries moon will forget to rise, keeps watch at window, sees moon always comes up, drifts off calm and safe. No mood was specified, so N/A.",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "Worry taken seriously ('That is a big worry'). Trusted figure Dad is supportive. Concrete coping strategy: slow breathing. Feared thing (dark) never made real or fought. Worry shrinks gradually and ending is sleepy. Stated moral? Dad's line 'The moon is keeping watch. And so am I' is gentle reassurance rather than a moral, so no moral is stated.",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 469,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        }
+      ],
+      "comparisons": [],
+      "kept_round": 0
+    },
+    {
+      "index": 1,
+      "spec": {
+        "category": "comfort",
+        "characters": [
+          "my son"
+        ],
+        "setting": "his bedroom",
+        "premise": "My son feels nervous about his first day at a new school tomorrow. His favorite stuffed rabbit helps him practice saying hello, and by the end he feels brave enough to sleep.",
+        "mood": null,
+        "worry": "scared of the dark",
+        "named_characters": true
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "Milo and the Brave Bedtime\n\nMilo lived in a small blue house with a big yellow door. His bedroom had a window, a bookshelf, and a bed with a green blanket. On the bed sat his favorite stuffed rabbit, named Biscuit.\n\nTonight Milo sat up in bed. His eyes were wide. \"Mama,\" he whispered, \"tomorrow I start at a new school.\"\n\nMama sat down beside him. \"That sounds big,\" she said. \"Tell me how you feel.\"\n\n\"I feel wobbly,\" said Milo. \"My tummy goes flip-flop. And the dark feels bigger when I think about it.\"\n\nMama nodded. \"That makes sense. New things can feel big. And it's okay to feel wobbly. Lots of children feel that way.\"\n\nMilo hugged Biscuit tight. \"Biscuit feels wobbly too,\" he said.\n\nMama smiled. \"Let's help Biscuit feel better. Maybe you could practice saying hello. Biscuit is very good at listening.\"\n\nMilo sat up a little straighter. He held Biscuit up to his face. \"Hello,\" he said softly. \"My name is Milo.\"\n\n\"Hello, Milo,\" said Mama, in a funny rabbit voice. \"I am Biscuit. I like your blanket.\"\n\nMilo giggled. \"Thank you,\" he said. \"Hello. I like to draw dinosaurs.\"\n\nThey practiced again. And again. Each time Milo's voice got a little stronger. The flip-flop in his tummy got a little smaller.\n\nThen Milo looked at the window. The moon was round and silver. Outside, the trees were still.\n\n\"The dark still feels a little big,\" he said quietly.\n\nMama reached over and turned on the little star lamp by the bed. Soft, gold light spread across the blanket. \"Now there's a little light to keep you company,\" she said. \"Your room looks just like your room, see? Your books. Your toy truck. Biscuit is right here.\"\n\nMilo looked around. The bookshelf was still there. The toy truck was still there. Everything was in its place.\n\n\"Oh,\" he said. \"It's still my room.\"\n\n\"It always is,\" said Mama. \"And I'll be right down the hall, all night long.\"\n\nMilo took a deep breath in. He let it out slowly, like blowing on warm soup. He did it once more. Then once more after that.\n\n\"Mama,\" he said, \"when I feel wobbly at school, I can take a slow breath. And I can say hello to a new friend. Like practicing with Biscuit.\"\n\n\"That's a wonderful plan,\" said Mama. \"You know just what to do.\"\n\nMilo tucked Biscuit under his arm. He pulled the green blanket up to his chin. His eyes felt heavy and soft.\n\n\"Good night, Mama,\" he murmured.\n\n\"Good night, Milo,\" said Mama. She kissed his forehead. \"Sweet dreams.\"\n\nThe star lamp glowed. The moon kept watch through the window. Milo breathed slowly, in and out, in and out. Biscuit sat close by his cheek.\n\nTomorrow was a new day. But tonight, Milo was safe, warm, and ready to rest.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "No violence, injury, or unsafe acts. The dark is handled by turning on a star lamp; nothing dangerous occurs.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final third: 'Milo took a deep breath in... blowing on warm soup', 'Milo breathed slowly, in and out', ends 'Milo was safe, warm, and ready to rest.' Calm and sleepy.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "User named 'my son' with no name given; story uses Milo, a bedroom, and a stuffed rabbit (the user did not specify a rabbit, but the favorite stuffed toy is reasonable). The setting is 'his bedroom' and it appears throughout ('It's still my room').",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Names stay Milo, Mama, Biscuit. Room contents (bookshelf, toy truck, window) stay consistent. Moon and trees remain consistent through the night scene.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Short sentences and simple words ('wobbly', 'flip-flop', 'giggled'). Easy to read aloud.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: Milo's nerves about new school. Problem: wobbly feelings and dark. Attempt: practicing hello with Biscuit, breathing. Resolution: feels safe and ready to sleep.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Specific details: 'flip-flop' tummy, dinosaur drawing, rabbit voice, 'like blowing on warm soup', round silver moon, gold star lamp. Milo makes a choice to practice breathing and greeting.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "Premise honored: Milo feels nervous about tomorrow's first day at a new school, Biscuit helps him practice saying hello, and he ends brave enough to sleep. No mood was specified, so this is N/A.",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "Character's worry taken seriously ('That makes sense... it's okay to feel wobbly'). Trusted figure present (Mama). One concrete strategy (slow breathing, saying hello). Feared thing (dark) is not made real or fought; it's softened by a lamp. Worry shrinks gradually and ends sleepy. No stated moral; 'Tomorrow was a new day' is gentle, not preachy.",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 477,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        }
+      ],
+      "comparisons": [],
+      "kept_round": 0
+    },
+    {
+      "index": 2,
+      "spec": {
+        "category": "comfort",
+        "characters": [
+          "my son"
+        ],
+        "setting": "his cozy bed at home",
+        "premise": "My son is sad because his best friend moved far away and he misses him. He writes a letter and tucks it under his pillow, and dreams a warm dream about their next adventure together.",
+        "mood": null,
+        "worry": "scared of the dark",
+        "named_characters": true
+      },
+      "versions": [
+        {
+          "round": 0,
+          "text": "Milo and the Letter Under the Pillow\n\nMilo lay in his cozy bed. The room was dark. The night-light glowed, soft and yellow.\n\nMilo was sad. His best friend, Sam, had moved far away. Sam lived in a city across the big river now.\n\n\"I miss Sam,\" Milo said quietly.\n\nHis mom sat on the edge of the bed. She stroked his hair. \"I know, sweetheart. It is hard when a friend goes far away.\"\n\n\"It feels like the dark is bigger without him,\" Milo whispered. \"Sometimes I feel scared of the dark, and I don't have Sam to tell.\"\n\nMom did not laugh. She did not say, \"Don't be silly.\" She nodded slowly. \"Being scared and missing someone are both real feelings. You are allowed to have them. Let's think of something together.\"\n\nMilo sat up. He looked at his blanket, which was blue and soft.\n\n\"I could write Sam a letter,\" he said. \"Then I wouldn't feel so alone.\"\n\n\"That is a lovely idea,\" said Mom.\n\nSo Milo found a pencil and a piece of paper. He wrote slowly, in big letters.\n\n*Dear Sam, I miss you. Remember the tree house? Let's build a new one when you come back. Your friend, Milo.*\n\nHe read it twice. Then he folded it into a small square.\n\n\"Can I keep it under my pillow?\" he asked.\n\n\"Of course,\" said Mom. \"Then it will be close to you all night.\"\n\nMilo tucked the letter under his pillow. He felt a little warmer inside.\n\nMom took a slow breath, in and out. \"When the dark feels big, you can breathe like this with me. In through the nose. Out through the mouth. Want to try?\"\n\nMilo nodded. They breathed together. In, and out. In, and out.\n\nMilo's hand found the soft edge of his blanket. He held it tight, then let it go. He looked at the night-light. It glowed like a little moon.\n\n\"The dark is still there,\" Milo said.\n\n\"It is,\" said Mom. \"But you are here, and I am here, and the letter is here too.\"\n\nMilo smiled. The room did not feel so big now.\n\nMom kissed his forehead. \"I'll leave the door open a little. Goodnight, Milo.\"\n\n\"Goodnight, Mom,\" Milo mumbled.\n\nMilo closed his eyes. He pictured Sam standing by the big oak tree. Sam waved and grinned. Together they climbed up and up, and the wooden planks of their new tree house creaked happily under their feet. The wind hummed a gentle song. The river sparkled far below, calm and blue.\n\n\"Next time,\" Sam called softly, \"we will build the best tree house ever.\"\n\nMilo yawned. His breathing slowed. His blanket felt heavy and warm.\n\nUnder his pillow, the letter rested quietly, keeping its promise.\n\nThe night-light glowed on. The house was still. Milo was safe, cozy and sleepy, and his dream drifted on like a boat on a calm sea until morning.",
+          "evaluation": {
+            "judge": {
+              "safety": {
+                "evidence": "Climbing a tree house is mentioned only in a dream; no real danger or unsafe act is shown. Story stays calm throughout.",
+                "passed": true,
+                "fix": null
+              },
+              "wind_down": {
+                "evidence": "Final paragraphs: 'Milo yawned. His breathing slowed.' ... 'Milo was safe, cozy and sleepy, and his dream drifted on like a boat on a calm sea until morning.' Ends calm and sleepy.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_named": {
+                "evidence": "The user's son is named Milo, the setting is his cozy bed at home, and the story uses 'Milo' and the bed/room throughout.",
+                "passed": true,
+                "fix": null
+              },
+              "consistency": {
+                "evidence": "Sam moved across the river, consistently referenced; night-light, blanket, pillow remain consistent. No contradictions found.",
+                "passed": true,
+                "fix": null
+              },
+              "age_language": {
+                "evidence": "Short sentences and simple words such as 'cozy', 'whispered', 'glowed'; easy to read aloud. Some slightly richer phrasing ('keeping its promise') but still accessible.",
+                "passed": true,
+                "fix": null
+              },
+              "story_arc": {
+                "evidence": "Setup: Milo is sad and Sam moved away. Problem: missing Sam and fear of dark. Attempt: writes a letter and practices breathing. Resolution: room feels smaller, Milo falls asleep dreaming.",
+                "passed": true,
+                "fix": null
+              },
+              "engagement": {
+                "evidence": "Milo makes choices (writing the letter, asking to keep it under his pillow, trying breathing); vivid details like 'blue and soft' blanket, oak tree, creaking planks, sparkling river.",
+                "passed": true,
+                "fix": null
+              },
+              "faithfulness_premise_mood": {
+                "evidence": "Premise honored: Milo is sad, friend moved away, he writes a letter, tucks it under pillow, dreams of next adventure. Mood not specified, so this is judged on premise only.",
+                "passed": true,
+                "fix": null
+              },
+              "category_checks": {
+                "evidence": "Worry shared and taken seriously ('Being scared and missing someone are both real feelings'); trusted figure Mom is supportive; concrete coping strategy of breathing together; feared dark is never made real or fought; worry shrinks gradually and ending is safe; no stated moral ('Let's think of something together' is not a moral).",
+                "passed": true,
+                "fix": null
+              }
+            },
+            "word_count": 487,
+            "length_ok": true,
+            "hard_failures": [],
+            "soft_failures": []
+          },
+          "feedback_sent": null
+        }
+      ],
+      "comparisons": [],
+      "kept_round": 0
+    }
+  ],
+  "selection": {
+    "rule": "survivors",
+    "survivors": [
+      0,
+      1,
+      2
+    ],
+    "pairs": [
+      {
+        "x": 0,
+        "y": 1,
+        "verdict": "y"
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "verdict": "tie"
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "verdict": "x"
+      }
+    ],
+    "wins": {
+      "0": 0,
+      "1": 2,
+      "2": 0
+    },
+    "chosen": 1
+  },
+  "final": {
+    "status": "story",
+    "source": "draft",
+    "draft_index": 1,
+    "round": 0,
+    "all_passed": true,
+    "hard_failures": [],
+    "soft_failures": []
+  },
+  "latency_budget_exceeded": false,
+  "usage": {
+    "calls": 15,
+    "prompt_tokens": 29049,
+    "completion_tokens": 7071,
+    "by_stage": {
+      "gate": {
+        "calls": 1,
+        "prompt_tokens": 741,
+        "completion_tokens": 81,
+        "cost_usd": 0.0001146
+      },
+      "extract": {
+        "calls": 1,
+        "prompt_tokens": 1164,
+        "completion_tokens": 49,
+        "cost_usd": 0.0001409
+      },
+      "brainstorm": {
+        "calls": 1,
+        "prompt_tokens": 967,
+        "completion_tokens": 304,
+        "cost_usd": 0.0002487
+      },
+      "generate": {
+        "calls": 3,
+        "prompt_tokens": 3075,
+        "completion_tokens": 2935,
+        "cost_usd": 0.001775
+      },
+      "judge": {
+        "calls": 3,
+        "prompt_tokens": 8320,
+        "completion_tokens": 2574,
+        "cost_usd": 0.0021190000000000002
+      },
+      "compare": {
+        "calls": 6,
+        "prompt_tokens": 14782,
+        "completion_tokens": 1128,
+        "cost_usd": 0.0020422
+      }
+    }
+  },
+  "timings": {
+    "gate": 1.8481395840644836,
+    "extract": 1.2158622500719503,
+    "brainstorm": 2.4423865830758587,
+    "draft_2": 10.685103458934464,
+    "draft_0": 10.748911833041348,
+    "draft_1": 12.762843125034124,
+    "drafts": 12.765161916962825,
+    "selection": 2.6184402919607237,
+    "total": 20.89029412495438
+  },
+  "calls": [
+    {
+      "stage": "gate",
+      "prompt_tokens": 741,
+      "completion_tokens": 81,
+      "cost_usd": 0.0001146,
+      "seconds": 1.848
+    },
+    {
+      "stage": "extract",
+      "prompt_tokens": 1164,
+      "completion_tokens": 49,
+      "cost_usd": 0.0001409,
+      "seconds": 1.215
+    },
+    {
+      "stage": "brainstorm",
+      "prompt_tokens": 967,
+      "completion_tokens": 304,
+      "cost_usd": 0.0002487,
+      "seconds": 2.441
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 1031,
+      "completion_tokens": 952,
+      "cost_usd": 0.0005791,
+      "seconds": 6.155
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 1021,
+      "completion_tokens": 972,
+      "cost_usd": 0.0005881,
+      "seconds": 6.477
+    },
+    {
+      "stage": "generate",
+      "prompt_tokens": 1023,
+      "completion_tokens": 1011,
+      "cost_usd": 0.0006078,
+      "seconds": 6.672
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 2763,
+      "completion_tokens": 830,
+      "cost_usd": 0.0006913,
+      "seconds": 4.206
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 2753,
+      "completion_tokens": 837,
+      "cost_usd": 0.0006938,
+      "seconds": 4.59
+    },
+    {
+      "stage": "judge",
+      "prompt_tokens": 2804,
+      "completion_tokens": 907,
+      "cost_usd": 0.0007339,
+      "seconds": 6.09
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2470,
+      "completion_tokens": 180,
+      "cost_usd": 0.000337,
+      "seconds": 1.867
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2470,
+      "completion_tokens": 174,
+      "cost_usd": 0.000334,
+      "seconds": 1.942
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2431,
+      "completion_tokens": 197,
+      "cost_usd": 0.0003416,
+      "seconds": 2.191
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2490,
+      "completion_tokens": 215,
+      "cost_usd": 0.0003565,
+      "seconds": 2.217
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2490,
+      "completion_tokens": 192,
+      "cost_usd": 0.000345,
+      "seconds": 2.221
+    },
+    {
+      "stage": "compare",
+      "prompt_tokens": 2431,
+      "completion_tokens": 170,
+      "cost_usd": 0.0003281,
+      "seconds": 2.598
+    }
+  ],
+  "total_cost_usd": 0.00644
+}
