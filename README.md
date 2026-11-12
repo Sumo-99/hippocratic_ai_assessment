@@ -48,3 +48,28 @@ No more than 2-3 hours
 Sure
 - How long should the story be?
 You decide
+---
+
+## Running this solution
+
+Requires Python 3.12.
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env        # then put your OpenRouter key in OPENROUTER_API_KEY
+```
+
+Run it:
+
+```bash
+python main.py "A story about a shy dragon who loves baking"
+python main.py "..." --verbose     # also prints the per-stage summary read from the trace
+python main.py "..." --baseline    # single plain model call, no pipeline (for comparison)
+pytest                             # unit tests, fake LLM, no network or API key needed
+```
+
+- Traces: every pipeline run writes a JSON trace to `runs/` (override with `RUNS_DIR`). It holds the request, gate result, extraction, every story version with its judge verdicts and the feedback it was revised from, the guard's keep decisions, timings, token usage and cost. `--baseline` writes none.
+- Cost guard: `MAX_RUN_COST_USD` (default 0.10) stops a run once its spend passes the cap and returns a friendly message. Other knobs (`MAX_ROUNDS`, `TARGET_WORDS`, `MAX_TOKENS`, `LATENCY_BUDGET_S`) can be overridden in the shell or in `.env`. The model and endpoint are fixed in `storyteller/config.py` on purpose.
+- Design: see `docs/ARCHITECTURE.md` (diagrams) and `docs/OPEN_QUESTIONS.md` (decisions and deferred items).

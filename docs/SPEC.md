@@ -18,6 +18,12 @@ brief, the override wins.
    never send it.
 3. `main` holds only the original `README.md` and `main.py`, unchanged. All
    work goes on branch `skeleton`.
+4. **Simplified first version (2026-11-12).** `skeleton` implements a deliberately
+   smaller version: one draft per request (no brainstorm), no LLM comparison (a
+   code-only regression guard instead), no fallback draft, no `mood` field (tone
+   goes into category or premise), and a gate returning separate `safety` and
+   `relevance` checks. The full brief as first built is on branch
+   `skeleton_extensive`. Details: `docs/OPEN_QUESTIONS.md`.
 
 ---
 
