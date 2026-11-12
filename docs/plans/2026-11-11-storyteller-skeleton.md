@@ -37,6 +37,23 @@ The user has **$10 of OpenRouter credit total**, and it must cover this skeleton
 - **Before any live call** the orchestrator states how many runs it intends and the estimated cost, and waits for the user's OK.
 - **Ledger:** after live runs, report the summed `cost` from the traces. Suggest the user also set a credit limit on the key in the OpenRouter dashboard (e.g. $3 for development).
 
+## Context Store and Per-Stage Protocol
+
+`store/` is the build's working memory, in ICM style: one folder per stage, plain markdown, and status read from which files exist. Routing and the stage table live in `store/CLAUDE.md`. It exists so that (a) each subagent loads only ~2k–8k tokens instead of the whole plan and chat, and (b) the user can follow progress by opening folders. There's no human gate between tasks; the store is how the user keeps track.
+
+Every stage runs this protocol:
+
+1. **Before dispatch (orchestrator):** create `store/NN_name/CONTEXT.md` from `store/_templates/CONTEXT.md`. It names the plan section to read, the input `HANDOFF.md` files, the exact files to write, and the "done when" command. It links to the plan rather than copying it (one home per fact). Append `dispatched` to `store/LOG.md`.
+2. **Subagent brief = pointers, not content:** "Read `store/CLAUDE.md`, then `store/NN_name/CONTEXT.md`, and only what it lists." Include nothing secret.
+3. **On finish (subagent):** write `store/NN_name/HANDOFF.md` from the template, under ~80 lines: what was built, **interfaces as built** (only differences from the plan), every `# DECISION:`, the verification result, open issues for the human reviewer, files touched, and live API cost.
+4. **Review (per-task reviewer):** reads the CONTEXT, the HANDOFF and the diff of the listed files. Sets `reviewer_verdict` in the HANDOFF frontmatter. The orchestrator appends `reviewed` to LOG.
+5. **Downstream stages read handoffs, not code or chat.** Where a HANDOFF's "interfaces as built" differs from the plan, the HANDOFF wins.
+6. **Wave 6 uses the store:** the walkthrough and the data-flow note start from the handoffs' "Open issues / for the human reviewer" and "Decisions" sections. `docs/OPEN_QUESTIONS.md` is compiled from those plus a grep for `# DECISION:`.
+
+`store/` contains notes, not implementation code, so the orchestrator may commit it as it changes (`chore(store): …`). This doesn't loosen the rule that implementation code waits for Wave 6.
+
+**`.gitignore` is maintained, not written once.** A baseline already exists (secrets, Python caches, venvs, `runs/*` except `runs/samples/`, OS files). Any task that introduces a new generated or local-only artifact adds its pattern in the same task and lists it in its HANDOFF. Before every commit the orchestrator runs `git status --ignored --short` and checks that nothing secret or generated is staged and nothing intended (e.g. `runs/samples/`) is ignored.
+
 ## Subagent Execution Map
 
 | Wave | Task | Model | Why that model | Parallel with |
@@ -53,7 +70,7 @@ The user has **$10 of OpenRouter credit total**, and it must cover this skeleton
 | 6 | Commit in logical pieces | (me) | Only after user OK | — |
 | 7 | Push `skeleton`, draft PR | (me) | Outward-facing, needs user OK | — |
 
-Each task's "Commit" step is the commit message to use **later**, in Wave 6. Nothing is committed during Waves 1–5.
+Each task's "Commit" step is the commit message to use **later**, in Wave 6. No implementation code is committed during Waves 1–5. Every row also follows the per-stage protocol above: its `store/` folder name is in `store/CLAUDE.md`, and it isn't done until its `HANDOFF.md` exists.
 
 Wave-2 tasks write disjoint files. T3 and T4 load prompts by name only, so they can run before T2 finishes (tests use `FakeLLM` and stub prompt text). Per-task reviewers are **haiku** for T7 and **sonnet** for the rest.
 
@@ -61,7 +78,8 @@ Wave-2 tasks write disjoint files. T3 and T4 load prompts by name only, so they 
 
 ```
 .env.example              OPENROUTER_API_KEY=
-.gitignore                .env, runs/, __pycache__/, .venv/
+.gitignore                exists; maintained per the protocol above
+store/                    exists; build context store (CLAUDE.md, LOG.md, _templates/, NN_stage/{CONTEXT,HANDOFF}.md)
 requirements.txt
 main.py                   CLI (rewritten; keeps the "what I'd build next" docstring slot EMPTY)
 storyteller/
@@ -144,7 +162,7 @@ class LLMClient(Protocol):
 
 ### Task 1: Foundation (sonnet)
 
-**Files:** Create `requirements.txt`, `.env.example`, `.gitignore`, `storyteller/{__init__,config,models,llm,fake,trace}.py`, `storyteller/prompts/__init__.py`, `tests/conftest.py`, `tests/test_llm.py`.
+**Files:** Create `requirements.txt`, `.env.example`, `storyteller/{__init__,config,models,llm,fake,trace}.py`, `storyteller/prompts/__init__.py`, `tests/conftest.py`, `tests/test_llm.py`.
 
 **Interfaces:** Produces everything under *Shared Interfaces*, plus:
 - `OpenRouterClient(api_key: str | None = None, on_usage: Callable | None = None)`. It reads `OPENROUTER_API_KEY` via dotenv and raises `RuntimeError("OPENROUTER_API_KEY not set")` if it is missing.
