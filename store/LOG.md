@@ -16,3 +16,8 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-11 | 05_pipeline | dispatched | opus subagent, Task 5
 2026-11-11 | 05_pipeline | handoff | full suite 78 passed; CLI help ok
 2026-11-11 | 05_pipeline | reviewed | approved
+2026-11-12 | 06_docs | dispatched | sonnet subagent, Task 6
+2026-11-12 | 07_live_runs | dispatched | haiku subagent, Task 7 (3 live runs, est <= $0.10, user supplied key)
+2026-11-12 | 06_docs | handoff | ARCHITECTURE + OPEN_QUESTIONS (16 entries) + README section; mermaid unvalidated
+2026-11-12 | 07_live_runs | live-call | 3 runs, total $0.0221, all exit 0
+2026-11-12 | wave4 | reviewed | approved both; flagged lenient judge + 'my son' as named character
