@@ -39,12 +39,12 @@ The user has **$10 of OpenRouter credit total**, and it must cover this skeleton
 
 ## Context Store and Per-Stage Protocol
 
-`store/` is the build's working memory, in ICM style: one folder per stage, plain markdown, and status read from which files exist. Routing and the stage table live in `store/CLAUDE.md`. It exists so that (a) each subagent loads only ~2k–8k tokens instead of the whole plan and chat, and (b) the user can follow progress by opening folders. There's no human gate between tasks; the store is how the user keeps track.
+`store/` is the build's working memory, in ICM style: one folder per stage, plain markdown, and status read from which files exist. Routing and the stage table live in `CLAUDE.md` (repo root). It exists so that (a) each subagent loads only ~2k–8k tokens instead of the whole plan and chat, and (b) the user can follow progress by opening folders. There's no human gate between tasks; the store is how the user keeps track.
 
 Every stage runs this protocol:
 
 1. **Before dispatch (orchestrator):** create `store/NN_name/CONTEXT.md` from `store/_templates/CONTEXT.md`. It names the plan section to read, the input `HANDOFF.md` files, the exact files to write, and the "done when" command. It links to the plan rather than copying it (one home per fact). Append `dispatched` to `store/LOG.md`.
-2. **Subagent brief = pointers, not content:** "Read `store/CLAUDE.md`, then `store/NN_name/CONTEXT.md`, and only what it lists." Include nothing secret.
+2. **Subagent brief = pointers, not content:** "Read `CLAUDE.md` (repo root), then `store/NN_name/CONTEXT.md`, and only what it lists." Include nothing secret.
 3. **On finish (subagent):** write `store/NN_name/HANDOFF.md` from the template, under ~80 lines: what was built, **interfaces as built** (only differences from the plan), every `# DECISION:`, the verification result, open issues for the human reviewer, files touched, and live API cost.
 4. **Review (per-task reviewer):** reads the CONTEXT, the HANDOFF and the diff of the listed files. Sets `reviewer_verdict` in the HANDOFF frontmatter. The orchestrator appends `reviewed` to LOG.
 5. **Downstream stages read handoffs, not code or chat.** Where a HANDOFF's "interfaces as built" differs from the plan, the HANDOFF wins.
@@ -70,7 +70,7 @@ Every stage runs this protocol:
 | 6 | Commit in logical pieces | (me) | Only after user OK | — |
 | 7 | Push `skeleton`, draft PR | (me) | Outward-facing, needs user OK | — |
 
-Each task's "Commit" step is the commit message to use **later**, in Wave 6. No implementation code is committed during Waves 1–5. Every row also follows the per-stage protocol above: its `store/` folder name is in `store/CLAUDE.md`, and it isn't done until its `HANDOFF.md` exists.
+Each task's "Commit" step is the commit message to use **later**, in Wave 6. No implementation code is committed during Waves 1–5. Every row also follows the per-stage protocol above: its `store/` folder name is in `CLAUDE.md` (repo root), and it isn't done until its `HANDOFF.md` exists.
 
 Wave-2 tasks write disjoint files. T3 and T4 load prompts by name only, so they can run before T2 finishes (tests use `FakeLLM` and stub prompt text). Per-task reviewers are **haiku** for T7 and **sonnet** for the rest.
 
