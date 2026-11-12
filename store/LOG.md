@@ -26,3 +26,4 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-12 | 08_auto_review | reviewed | 11 findings: fixed 8, #10 pre-fixed, #7 accepted, #8 deferred; 84 passed
 2026-11-12 | 09_simplify | handoff | trimmed to one draft + code-only guard; full build kept on skeleton_extensive; 67 passed
 2026-11-12 | 09_simplify | fixed | dropped mood (tone -> category/premise; rubric item faithfulness_premise); gate = safety + relevance Checks; 67 passed
+2026-11-12 | 09_simplify | live-call | 3 runs on simplified build, total $0.0060, all PASS (1 revision on named_characters: story_arc+length); runs/samples replaced
