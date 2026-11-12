@@ -20,7 +20,22 @@
 - Dependencies: `openai`, `pydantic`, `python-dotenv`. Dev only: `pytest`, `pytest-asyncio`. No frameworks.
 - Readable code that the author can explain line by line. Comment lightly. Mark judgment calls with `# DECISION:` and copy each into `docs/OPEN_QUESTIONS.md`.
 - Tests never touch the network. They use `FakeLLM` only.
-- Subagents do **not** run `git commit`. The orchestrator commits each task after review, because parallel subagents would race on the git index.
+- Story length: aim for 500–700 words (`TARGET_WORDS = 600`, said as "about 500–700 words" in the base prompt). The code check accepts 400–900 (`WORD_RANGE = (400, 900)`).
+- **No implementation commits until the Human Review Phase (Wave 6) is done.** Subagents and the orchestrator leave all task work uncommitted in the working tree. Per-task reviewers inspect it with `git status` / `git diff` scoped to the task's files. After the user finishes the review phase, the orchestrator commits in the small logical pieces listed under each task's "Commit" step (staging by file with `git add <paths>`). This also avoids parallel subagents racing on the git index.
+
+## API Budget (hard rule)
+
+The user has **$10 of OpenRouter credit total**, and it must cover this skeleton **and** the later eval set. Be extremely conservative.
+
+- **Price** (OpenRouter, checked 2026-11-11): $0.10 per 1M input tokens and $0.50 per 1M output tokens (prompts under 100k tokens). Estimated worst case for one full run (breadth: 3 drafts × 3 revision rounds, every comparison) ≈ 130k in + 35k out ≈ **$0.03**. A typical run is under $0.01. This holds only if hidden reasoning tokens are off. Set `extra_body["reasoning"] = {"enabled": False}`, and check the exact field in Task 1 Step 1 against OpenRouter docs.
+- **Who may spend:** only Task 7 (exactly 3 runs) and the final smoke check makes live calls. No subagent makes a live call unless the orchestrator has said so in that task's brief. Every other task uses `FakeLLM`.
+- **Guards built into the code (Task 1):**
+  - Request usage accounting (`extra_body["usage"] = {"include": True}`) and record `cost` per call in the trace.
+  - `config.MAX_RUN_COST_USD = 0.10`: the client raises `BudgetExceeded` once a single run's summed cost passes it.
+  - `config.MAX_TOKENS = 2000` per call.
+  - `RETRIES = 3`, and no retry on 4xx other than 429.
+- **Before any live call** the orchestrator states how many runs it intends and the estimated cost, and waits for the user's OK.
+- **Ledger:** after live runs, report the summed `cost` from the traces. Suggest the user also set a credit limit on the key in the OpenRouter dashboard (e.g. $3 for development).
 
 ## Subagent Execution Map
 
@@ -33,8 +48,12 @@
 | 3 | T5 Pipeline + selection + cap/fallback + CLI + baseline | **opus** | Most moving parts; async orchestration + edge rules | — |
 | 4 | T6 Docs: ARCHITECTURE (Mermaid), README run section, OPEN_QUESTIONS | **sonnet** | Defined deliverable | T7 |
 | 4 | T7 Live sample runs (3 requests) + trace summaries | **haiku** | Cheap, repetitive run-and-report | T6 |
-| 5 | Whole-branch review | **opus** | Final gate | — |
-| 5 | Orchestrator: push `skeleton`, draft PR | (me) | Outward-facing, needs user OK | — |
+| 5 | Automated whole-tree review | **opus** | Final automated gate | — |
+| 6 | Human Review Phase (walkthrough → Q&A → data-flow note) | (me, with user) | User owns every line | — |
+| 6 | Commit in logical pieces | (me) | Only after user OK | — |
+| 7 | Push `skeleton`, draft PR | (me) | Outward-facing, needs user OK | — |
+
+Each task's "Commit" step is the commit message to use **later**, in Wave 6. Nothing is committed during Waves 1–5.
 
 Wave-2 tasks write disjoint files. T3 and T4 load prompts by name only, so they can run before T2 finishes (tests use `FakeLLM` and stub prompt text). Per-task reviewers are **haiku** for T7 and **sonnet** for the rest.
 
@@ -119,7 +138,7 @@ class LLMClient(Protocol):
 
 `stage` is a label such as `"judge"` or `"revise"`. The client sends `(stage, prompt_tokens, completion_tokens, seconds)` to an optional `on_usage` callback, which `Trace` supplies.
 
-`storyteller/config.py`: `MODEL`, `BASE_URL`, `MAX_ROUNDS = 3`, `TARGET_WORDS = 600`, `WORD_RANGE = (350, 900)`, `MAX_TOKENS = 2000`, `LATENCY_BUDGET_S = 60`, `RETRIES = 3`, `UNKNOWN_CATEGORY_SET = ["cozy", "adventure", "silly"]`, `FALLBACK_CATEGORY = "cozy"`, `RUNS_DIR = "runs"`. Values may be overridden by env vars of the same name (optional).
+`storyteller/config.py`: `MODEL`, `BASE_URL`, `MAX_ROUNDS = 3`, `TARGET_WORDS = 600`, `WORD_RANGE = (400, 900)`, `MAX_TOKENS = 2000`, `MAX_RUN_COST_USD = 0.10`, `LATENCY_BUDGET_S = 60`, `RETRIES = 3`, `UNKNOWN_CATEGORY_SET = ["cozy", "adventure", "silly"]`, `FALLBACK_CATEGORY = "cozy"`, `RUNS_DIR = "runs"`. Values may be overridden by env vars of the same name (optional).
 
 ---
 
@@ -137,7 +156,8 @@ class LLMClient(Protocol):
 - [ ] **Step 2: Failing tests** in `tests/test_llm.py`:
   - `test_structured_retries_then_validates`: patch the client's raw call to return `'{"bad":1}'` first, then a valid GateResult JSON. Expect a `GateResult` back and 2 raw calls.
   - `test_structured_gives_up_after_retries`: raw call always invalid. Expect `LLMError` after `config.RETRIES` attempts.
-  - `test_never_sends_temperature`: inspect the captured kwargs. Expect `"temperature" not in kwargs` and `kwargs["model"] == "anthropic/claude-haiku-5.5"`.
+  - `test_never_sends_temperature`: inspect the captured kwargs. Expect `"temperature" not in kwargs`, `kwargs["model"] == "anthropic/claude-haiku-5.5"`, and reasoning disabled plus usage included in `extra_body`.
+  - `test_budget_exceeded_raises`: fake raw responses report `cost=0.06` each. The second call raises `BudgetExceeded` when `MAX_RUN_COST_USD = 0.10`.
   - `test_fake_llm_fifo_and_records_calls`.
   - `test_trace_stage_accumulates_and_writes_json` (use `tmp_path`, monkeypatch `RUNS_DIR`).
   - Patch `asyncio.sleep` so backoff doesn't slow tests.
@@ -264,15 +284,34 @@ class LLMClient(Protocol):
 
 ### Task 7: Live sample runs (haiku), in parallel with T6
 
-**Precondition:** `OPENROUTER_API_KEY` is in `.env`. If it's missing, skip and report "no key". The orchestrator asks the user first.
+**Precondition:** the user has put `OPENROUTER_API_KEY` in `.env` themselves (it is never pasted into chat or a brief). The orchestrator has stated "3 runs, est. ≤ $0.10 total" and the user has OK'd it. If the key is missing, skip and report "no key". Never run more than the 3 requests, and never re-run a crashed request without asking.
 
 - [ ] **Step 1:** Run `python main.py --verbose "tell me a story"`, `… "a story about Alice and her cat Bob"`, `… "my son is scared of the dark"`.
 - [ ] **Step 2:** Copy the 3 traces to `runs/samples/` (un-ignore that folder with `!runs/samples/` in `.gitignore`). Check that the traces contain no key: `grep -ri "sk-or" runs/samples` should print nothing.
 - [ ] **Step 3:** Report per run: branch, number of drafts, rounds, final failures, total seconds against the 60s budget, and token totals. Don't edit code. If a run crashes, report the traceback and stop.
 - [ ] **Step 4 (orchestrator):** commit `chore: sample run traces`.
 
-### Wave 5: Review and PR (orchestrator)
+### Wave 5: Automated review (orchestrator + opus reviewer)
 
-- [ ] Opus reviewer over `git diff main...skeleton` against `docs/SPEC.md` and this plan. Fix the findings it confirms.
-- [ ] `pytest -q` passes. `git grep -n "sk-or\|OPENROUTER_API_KEY="` shows only `.env.example` with an empty value.
-- [ ] **Ask the user before pushing.** Then `git push -u origin skeleton` and open a draft PR (`gh pr create --draft --base main`) covering what's done, what's stubbed (deferred TODOs), and the `# DECISION:` list. Do not merge.
+- [ ] Opus reviewer over the uncommitted working tree (`git diff` + untracked files) against `docs/SPEC.md` and this plan. Fix the findings it confirms.
+- [ ] `pytest -q` passes. `grep -rn "sk-or" .` (excluding `.env` and `.git`) prints nothing, and `.env` is gitignored.
+
+### Wave 6: Human Review Phase (user + orchestrator, interactive, BEFORE any implementation commit)
+
+The user is responsible for every line and wants a clear picture before anything is committed. Run the three steps **one at a time**. Move on only when the user says so. Don't produce a later step's material early.
+
+- [ ] **Step 1: Walkthrough of the core parts.** Explain the codebase in reading order:
+  1. `storyteller/models.py`: the schemas. Every module talks through them, and the strict JSON output depends on their field order (evidence first).
+  2. `storyteller/llm.py`: the one place money is spent. Covers the OpenRouter call, structured output, retries, and the budget guard.
+  3. `storyteller/pipeline.py` `run()`: the flow, gate → extract → branch → draft loops → select → fallback.
+  4. `judge.py` / `feedback.py` / `compare.py`: the quality loop (rubric, hard vs soft priority, keep-better, two-order comparison).
+  5. `generate.py` + `prompts/`: how the system prompt is put together.
+
+  Flag the **must-review** spots explicitly. These are the schemas, the hard/soft lists in `config.py`, the safety fallback, the budget guard, and every `# DECISION:`.
+- [ ] **Step 2: Questions.** Answer the user's questions. Fix anything they want changed (still uncommitted), then re-run `pytest -q`.
+- [ ] **Step 3: Core functions and data flow note, given when the user asks.** One note listing each core function (signature, inputs, outputs, which LLM stage it calls) and the data flow from request to `PipelineResult` and trace JSON, including which fields of which model carry each decision. Offer to save it as `docs/REVIEW_NOTES.md`.
+- [ ] **Then commit** in the logical pieces named under each task, after the user OKs it.
+
+### Wave 7: Push and PR (orchestrator)
+
+- [ ] **Ask the user before pushing.** Then `git push -u origin skeleton` and open a draft PR (`gh pr create --draft --base main`) covering what's done, what's stubbed (deferred TODOs), the `# DECISION:` list, and the total API spend so far. Do not merge.
