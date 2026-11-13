@@ -3,17 +3,16 @@ import pytest
 
 from storyteller.prompts import load
 
-CATEGORIES = ["adventure", "silly", "comfort", "gentle_lesson", "cozy"]
+CATEGORIES = ["adventure", "silly", "comfort", "cozy"]
 
 KEYS = {
     "base": {"target_words": "600"},
     "gate": {},
-    "extract": {},
-    "brainstorm": {"characters": "Milo", "setting": "a lighthouse", "categories": "cozy, adventure, silly"},
+    "extract": {"overridable_checks": "- wind_down: ends calm and sleepy"},
     "judge": {"rubric_context": "Named characters: Milo", "category_checks": "- a check"},
     "revise": {},
-    "compare": {},
     "baseline": {},
+    "options": {"story_type": "a calm, cozy bedtime story", "keep": ""},
     **{c: {} for c in CATEGORIES},
 }
 
@@ -46,15 +45,81 @@ def test_extract_does_not_treat_family_words_as_names():
     # "my son" was extracted as a named character.
     text = load("extract").template
     assert '"my son is scared of the dark" → characters: []' in text
-    assert '"my little brother Sam" → characters: ["Sam"]' in text
+    assert '"my little brother Sam" → characters: [{name: "Sam", role: null}]' in text
+
+
+def test_extract_keeps_story_character_roles():
+    # Guards the "her cat Bob" bug: the role was dropped, so Bob was written as a person.
+    text = load("extract").template
+    assert '"Alice and her cat Bob"' in text and 'role: "Alice\'s cat"' in text
+
+
+def test_extract_keeps_the_subject_as_premise_and_records_listener():
+    # Guards the "pirate battle" run, where the subject was dropped (premise null) and the
+    # story ignored it, and the dog whose name survived only inside the premise.
+    text = load("extract").template
+    assert '"a story about a cat" → premise: "a cat"' in text
+    assert "Never drop the subject" in text
+    assert "including the names of animals and pets" in text
+    assert "- listener:" in text and '"for my daughter" → "daughter"' in text
+
+
+def test_extract_explains_follow_up_feedback():
+    text = load("extract").template
+    assert "## Follow-up feedback" in text
+    assert "later changes win over earlier ones" in text.lower()
+    assert "- preferences:" in text and "- overrides:" in text
+    assert "quote" in text and "$overridable_checks" in text
+    # The cliffhanger phrasings map to wind_down; an exciting story alone is not a conflict.
+    assert '"to be continued"' in text and '"leave it hanging"' in text
+    assert '"an exciting adventure" → overrides: []' in text
+
+
+def test_extract_has_no_stray_dollar_signs():
+    # Task 1 substitutes $overridable_checks with string.Template; any other $ would break it.
+    text = load("extract").template
+    assert text.count("$") == 1
+
+
+def test_extract_never_lists_safety_as_overridable():
+    # DECISION: assert the explicit statement rather than the absence of the word. The prompt
+    # should tell the model outright that safety is off the table, not leave it to inference.
+    text = load("extract").template
+    assert "The safety rule can never be overridden" in text
+    assert "- safety" not in text
+
+
+def test_judge_and_writer_require_roles_to_stay():
+    assert "recognisably that role" in load("judge").template
+    assert "must stay that role" in load("base").template
+
+
+def test_base_asks_for_setting_detail_fresh_names_and_listener_fit():
+    text = load("base").template
+    assert "weave concrete details of that place" in text
+    assert "Avoid overused storybook names such as Pip" in text
+    assert "Listener says who the story is for" in text
+    assert "never swap it for a different subject" in text
 
 
 def test_judge_names_every_dimension():
     text = load("judge").template
     for field in ["safety", "wind_down", "faithfulness_named", "consistency", "age_language",
-                  "story_arc", "engagement", "faithfulness_premise_mood", "category_checks"]:
+                  "story_arc", "engagement", "faithfulness_premise", "category_checks"]:
         assert field in text
     assert "revis" not in text.lower()
+
+
+@pytest.mark.parametrize("name", sorted(KEYS))
+def test_no_concrete_story_examples_leak_into_prompts(name):
+    # Guards against example objects/names being copied into every story (the convergence
+    # test found cozy stories full of the cozy prompt's own examples).
+    text = load(name).template.lower()
+    for word in ("cocoa", "little boat", "moon is a friend", "lullaby", "milo",
+                 "dragon who eats", "can become a race",
+                 # random-category run: adventure and silly stories copied these
+                 "river to cross", "riddle", "cow who wants to fly", "teapot", "boing"):
+        assert word not in text, f"{name}.md contains example text {word!r}"
 
 
 def test_base_states_target_length():

@@ -1,30 +1,31 @@
-"""Extraction stage plus the routing logic that decides depth vs breadth."""
-from typing import Literal
+"""Extraction: pull the story variables out of a request that already passed the gate.
+On a feedback turn the text is the whole conversation (pipeline.conversation_text)."""
+import re
 
-from . import config, prompts
-from .models import Category, Extraction
-
-
-async def extract(llm, request: str) -> Extraction:
-    return normalize(await llm.structured(prompts.load("extract").substitute(), request,
-                                          Extraction, stage="extract"))
+from . import overrides, prompts
+from .models import Extraction
 
 
-def normalize(e: Extraction) -> Extraction:
-    """Code-side fixups of the LLM's extraction."""
-    # DECISION: comfort needs a worry to address; without one, fall back to cozy in code
-    # rather than trusting the model. Category otherwise stays None here (see breadth_categories).
-    if e.category == "comfort" and not e.worry:
-        return e.model_copy(update={"category": "cozy"})
-    return e
+async def extract(llm, text: str) -> Extraction:
+    system = prompts.load("extract").substitute(overridable_checks=overrides.overridable_text())
+    e = await llm.structured(system, text, Extraction, stage="extract")
+    # A character with neither name nor role carries nothing; drop it.
+    # DECISION: keep an override only if its quote really appears in the user's text. An
+    # over-eager override (e.g. wind_down for "an exciting adventure") is the main risk, so code
+    # checks the model's evidence instead of trusting it. overrides.active() also drops any
+    # safety override, so the StorySpec built from this never even sees one.
+    return e.model_copy(update={
+        "characters": [c for c in e.characters if c.name or c.role],
+        "overrides": [o for o in overrides.active(e.overrides) if quoted(o.quote, text)],
+    })
 
 
-def plan_drafts(e: Extraction) -> Literal["depth", "breadth"]:
-    """Premise given -> refine that one idea (depth); otherwise explore three (breadth)."""
-    return "depth" if e.premise else "breadth"
+def _squash(s: str) -> str:
+    return re.sub(r"\s+", " ", s).strip().lower()
 
 
-def breadth_categories(e: Extraction) -> list[Category]:
-    if e.category:
-        return [e.category] * 3
-    return list(config.UNKNOWN_CATEGORY_SET)
+def quoted(quote: str, text: str) -> bool:
+    """quote appears in text as whole words, ignoring case and runs of whitespace
+    (so "end" does not match inside "friend")."""
+    q = _squash(quote)
+    return bool(q) and re.search(rf"(?<!\w){re.escape(q)}(?!\w)", _squash(text)) is not None

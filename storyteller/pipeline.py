@@ -1,20 +1,17 @@
-"""The whole story flow: gate -> extract -> depth/breadth -> parallel draft loops -> selection
--> safety fallback. `run(request)` is the one public entry; the CLI and an eval script both use it.
-Every run writes a JSON trace to config.RUNS_DIR, even when it fails."""
-import asyncio
+"""Run the story pipeline from request validation through writing, judging, and safety checks.
+Feedback turns revise the delivered story while preserving the original idea and trace."""
 import time
-from itertools import combinations
 
 from . import config
-from .brainstorm import brainstorm
-from .compare import compare_both_orders, keep_better
-from .extract import extract, plan_drafts
+from .extract import extract
 from .feedback import build_feedback
 from .gate import check_request, gate_message
-from .generate import breadth_specs, depth_spec, revise_story, write_story
+from .generate import revise_story, write_story
 from .judge import evaluate
-from .llm import BudgetExceeded, LLMClient, OpenRouterClient
-from .models import Draft, DraftVersion, Extraction, PipelineResult
+from .llm import AnthropicClient, BudgetExceeded, LLMClient
+from .options import get_options, pick
+from .models import DraftVersion, Evaluation, PipelineResult, StorySession, StorySpec
+from .overrides import apply_overrides
 from .trace import Trace
 
 CANNED_SAFETY_MESSAGE = (
@@ -25,178 +22,163 @@ BUDGET_MESSAGE = (
     "Please try again, maybe with a simpler request.")
 
 
-async def _all_or_cancel(coros) -> list:
-    """Run coroutines concurrently. If one fails, cancel the rest and re-raise that error.
+# ---- the regression guard (pure code, no LLM) --------------------------------------------
 
-    Plain asyncio.gather would leave the other drafts running (and spending money) after a
-    failure; a TaskGroup cancels them. TaskGroup wraps errors in an ExceptionGroup, so we
-    unwrap the first one to keep `except BudgetExceeded` in `run()` simple."""
-    try:
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(c) for c in coros]
-    except ExceptionGroup as group:
-        raise group.exceptions[0] from None
-    return [t.result() for t in tasks]
+# On feedback turns, protect the requested change via the judge's faithfulness signal.
+PROTECT_FEEDBACK = ("faithfulness_premise",)
 
 
-# ---- one draft: write, judge, revise up to MAX_ROUNDS times ------------------------------
+def _hard_rank(v: DraftVersion, protect: tuple[str, ...] = ()) -> tuple[bool, int, int]:
+    """Lower is better: (fails safety?, number of hard failures, number of protected
+    dimensions failing). False sorts before True. Overridden failures are in neither list."""
+    ev = v.evaluation
+    failing = set(ev.hard_failures) | set(ev.soft_failures)
+    return ("safety" in ev.hard_failures, len(ev.hard_failures),
+            sum(d in failing for d in protect))
 
-async def run_draft(llm, spec, index: int, trace: Trace) -> Draft:
-    with trace.stage(f"draft_{index}"):
-        text = await write_story(llm, spec)
-        first = DraftVersion(round=0, text=text, evaluation=await evaluate(llm, spec, text),
-                             feedback_sent=None)
-        # TODO(critique-check): an open-ended "what would a parent dislike?" pass would go
-        # here, after evaluate. Deferred until evals show the rubric misses things.
-        versions, comparisons, kept = [first], [], first
+
+def keep_better(prev: DraftVersion, new: DraftVersion,
+                protect: tuple[str, ...] = ()) -> DraftVersion:
+    """Keep the previous version only if the revision is strictly worse on hard checks, or
+    equal on them and worse on a `protect`ed dimension.
+    """
+    return prev if _hard_rank(new, protect) > _hard_rank(prev, protect) else new
+
+
+# ---- the conversation and the judge ------------------------------------------------------
+
+def conversation_text(request: str, feedback: list[str]) -> str:
+    """What the gate, the extraction and the judge read. With no feedback it is the bare
+    request, so a request-only run sends exactly what it always did."""
+    if not feedback:
+        return request
+    lines = [f"Original request: {request}",
+             "Changes asked for after hearing the story (newest last):"]
+    lines += [f"{i}. {f}" for i, f in enumerate(feedback, 1)]
+    return "\n".join(lines)
+
+
+async def _judge(llm, spec: StorySpec, text: str, request: str) -> Evaluation:
+    """The unchanged rubric judge, then the user's overrides (never safety) applied in code.
+    Every evaluation in the pipeline goes through here."""
+    return apply_overrides(await evaluate(llm, spec, text, request), spec.overrides)
+
+
+# ---- write, judge, revise ----------------------------------------------------------------
+
+async def write_and_revise(llm, spec: StorySpec, trace: Trace, request: str,
+                           previous: DraftVersion | None = None,
+                           change: str | None = None) -> DraftVersion:
+    """Round 0, then up to MAX_ROUNDS revisions. Returns the version we keep.
+
+    Round 0 is a fresh draft, or, on a feedback turn (`previous` set), a revision of the
+    delivered story asked to make the feedback's `change`."""
+    with trace.stage("write_and_revise"):
+        if previous is None:
+            text, sent = await write_story(llm, spec), None
+        else:
+            sent = f"- Feedback on this story: {change}"
+            text = await revise_story(llm, spec, previous.text, sent)
+        kept = DraftVersion(round=0, text=text, evaluation=await _judge(llm, spec, text, request),
+                            feedback_sent=sent)
+        versions, guard_log = [kept], []
+        # There is feedback (preferences, or this is a feedback turn): the guard protects it,
+        # and every loop revision is told not to undo it.
+        protect = PROTECT_FEEDBACK if (previous is not None or spec.preferences) else ()
 
         for rnd in range(1, config.MAX_ROUNDS + 1):
             if kept.evaluation.all_passed:
-                break  # nothing to fix: no more judge or compare calls for this draft
-            feedback = build_feedback(kept.evaluation)
+                break  # nothing left to fix
+            # Feedback lists only the FAILED items of the version we kept: hard ones if any
+            # failed, otherwise the soft ones (see feedback.build_feedback). Overridden failures
+            # are already out of those lists, so they are never sent.
+            feedback = build_feedback(kept.evaluation, keep=spec.preferences)
+            # The revision starts from the kept version, in full, under the same system prompt.
             new_text = await revise_story(llm, spec, kept.text, feedback)
-            # DECISION: `feedback_sent` is stored on the version it PRODUCED (the feedback
-            # this revision was asked to address), so round 0 has none.
             new = DraftVersion(round=rnd, text=new_text,
-                               evaluation=await evaluate(llm, spec, new_text),
+                               evaluation=await _judge(llm, spec, new_text, request),
                                feedback_sent=feedback)
             versions.append(new)
-            kept, record = await keep_better(llm, kept, new)  # next round starts from `kept`
-            comparisons.append({"round": rnd, **record})
+            prev = kept
+            kept = keep_better(prev, new, protect)  # the next round starts from the kept one
+            guard_log.append({"round": rnd, "kept_round": kept.round,
+                              "previous_hard": prev.evaluation.hard_failures,
+                              "new_hard": new.evaluation.hard_failures})
+            if kept is prev and _hard_rank(new)[:2] == _hard_rank(prev)[:2]:
+                # Stop when a tied revision only drops the requested change; retry new hard failures.
+                guard_log[-1]["stopped"] = "revision dropped the requested change"
+                break
 
-    trace.append("drafts", {
-        "index": index, "spec": spec.model_dump(),
-        "versions": [v.model_dump() for v in versions],
-        "comparisons": comparisons, "kept_round": kept.round,
-    })
-    return Draft(index=index, spec=spec, versions=versions, kept=kept)
-
-
-# ---- selection across drafts -------------------------------------------------------------
-
-def _soft(d: Draft) -> int:
-    return len(d.kept.evaluation.soft_failures)
-
-
-def _hard(d: Draft) -> int:
-    return len(d.kept.evaluation.hard_failures)
-
-
-async def _rank_by_wins(llm, drafts: list[Draft], record: dict) -> Draft:
-    """Compare every pair (both orders, all at once), count wins, then sort with tiebreaks."""
-    if len(drafts) == 1:
-        return drafts[0]
-    pairs = list(combinations(drafts, 2))
-    verdicts = await _all_or_cancel(
-        compare_both_orders(llm, x.kept.text, y.kept.text) for x, y in pairs)
-    wins = {d.index: 0 for d in drafts}
-    for (x, y), verdict in zip(pairs, verdicts):
-        if verdict == "x":
-            wins[x.index] += 1
-        elif verdict == "y":
-            wins[y.index] += 1
-        # a tie (the two orders disagreed) gives nobody a win
-    record["pairs"] = [{"x": x.index, "y": y.index, "verdict": v}
-                       for (x, y), v in zip(pairs, verdicts)]
-    record["wins"] = wins
-    # More wins first, then fewer soft failures, then the earlier draft.
-    return sorted(drafts, key=lambda d: (-wins[d.index], _soft(d), d.index))[0]
-
-
-async def best_available(llm, drafts: list[Draft], record: dict) -> Draft:
-    """Every draft fails some hard check: pick the least bad one (never a safety failure)."""
-    # DECISION: drafts failing SAFETY are dropped first even if they have the fewest hard
-    # failures, because an unsafe story must never be shown. `run` only calls selection when
-    # at least one draft passes safety, so this list is never empty there.
-    safe = [d for d in drafts if "safety" not in d.kept.evaluation.hard_failures] or drafts
-    fewest = min(_hard(d) for d in safe)
-    tied = [d for d in safe if _hard(d) == fewest]
-    # DECISION: when 2 or 3 drafts tie on hard failures, reuse the same win counting as normal
-    # selection (pairwise both orders, then soft failures, then index) rather than a new rule.
-    return await _rank_by_wins(llm, tied, record)
-
-
-async def select(llm, drafts: list[Draft], trace: Trace | None = None) -> Draft:
-    """Pick the final draft. One draft: no selection step and no calls."""
-    if len(drafts) == 1:
-        return drafts[0]
-    record: dict = {}
-    survivors = [d for d in drafts if not d.kept.evaluation.hard_failures]
-    if survivors:
-        record["rule"] = "survivors"
-        record["survivors"] = [d.index for d in survivors]
-        chosen = await _rank_by_wins(llm, survivors, record)
-    else:
-        record["rule"] = "best_available"
-        chosen = await best_available(llm, drafts, record)
-    record["chosen"] = chosen.index
-    if trace is not None:
-        trace.set("selection", record)
-    return chosen
-
-
-# ---- safety fallback ---------------------------------------------------------------------
-
-async def _safety_fallback(llm, e: Extraction, trace: Trace) -> PipelineResult:
-    # TODO(safety-fallback): first pass. One fresh cozy draft (no premise), one evaluation,
-    # no revisions. A later version might retry or soften the request instead.
-    spec = depth_spec(e).model_copy(update={"category": "cozy", "premise": None})
-    with trace.stage("fallback"):
-        text = await write_story(llm, spec)
-        ev = await evaluate(llm, spec, text)
-    trace.set("fallback", {"spec": spec.model_dump(), "text": text,
-                           "evaluation": ev.model_dump()})
-    if "safety" in ev.hard_failures:
-        trace.set("final", {"status": "safety_fallback_message",
-                            "reason": "every draft and the cozy fallback failed safety"})
-        return PipelineResult(status="safety_fallback_message", story=None,
-                              message=CANNED_SAFETY_MESSAGE, trace_path=None)
-    # The fallback passed safety; other failures are tolerated (it gets no revisions).
-    trace.set("final", {"status": "story", "source": "fallback",
-                        "all_passed": ev.all_passed, "hard_failures": ev.hard_failures,
-                        "soft_failures": ev.soft_failures})
-    return PipelineResult(status="story", story=text, message=None, trace_path=None)
+    trace.set("spec", spec.model_dump())
+    trace.set("versions", [v.model_dump() for v in versions])
+    trace.set("guard", guard_log)
+    return kept
 
 
 # ---- the whole run -----------------------------------------------------------------------
 
-async def _run(request: str, llm, trace: Trace) -> PipelineResult:
+async def _run(session: StorySession, llm, trace: Trace,
+               feedback: str | None = None) -> PipelineResult:
+    """One turn of the conversation: the first story (feedback None), or one more change to
+    the delivered story. On anything but a delivered story, the incoming session comes back
+    unchanged."""
+    is_feedback = feedback is not None
+    all_feedback = [*session.feedback, feedback] if is_feedback else session.feedback
+    text = conversation_text(session.request, all_feedback)
+
+    # 1. Gate: judge the REQUEST (the whole conversation on a feedback turn). A failed request
+    #    stops here, before any extraction.
     with trace.stage("gate"):
-        g = await check_request(llm, request)
+        g = await check_request(llm, text)
     trace.set("gate", g.model_dump())
     rejection = gate_message(g)
     if rejection:
         trace.set("final", {"status": "rejected"})
-        return PipelineResult(status="rejected", story=None, message=rejection, trace_path=None)
+        return PipelineResult(status="rejected", story=None, message=rejection, trace_path=None,
+                              session=session)
 
+    # 2. Extraction -> the story's variables (characters, premise, category, setting), plus the
+    #    feedback (preferences) and overrides. Anything not asked for stays empty. The same path
+    #    handles an ask made up front or as feedback: it always reads the whole conversation.
     with trace.stage("extract"):
-        e = await extract(llm, request)
+        e = await extract(llm, text)
     trace.set("extraction", e.model_dump())
+    spec = StorySpec(**e.model_dump())
 
-    branch = plan_drafts(e)
-    trace.set("branch", branch)
-    if branch == "depth":
-        specs = [depth_spec(e)]
-    else:
-        with trace.stage("brainstorm"):
-            premises = await brainstorm(llm, e)
-        trace.set("premises", [p.model_dump() for p in premises])
-        specs = breadth_specs(e, premises)
+    # 3. No premise on the FIRST turn -> 5 model-made ideas that keep what was named; code
+    #    picks one. A feedback turn never asks for ideas again.
+    if is_feedback:
+        # Keep the original idea on feedback turns; feedback still fills empty fields.
+        spec = spec.model_copy(update={"idea": session.spec.idea})
+    elif spec.premise is None:
+        with trace.stage("options"):
+            options = await get_options(llm, spec)
+        i = pick(options, config.OPTIONS_SEED, session.request)
+        trace.set("options", {"list": [o.model_dump() for o in options],
+                              "picked_index": i, "seed": config.OPTIONS_SEED})
+        spec = spec.model_copy(update={"idea": options[i]})
 
-    with trace.stage("drafts"):  # wall clock for all drafts together (they run in parallel)
-        drafts = await _all_or_cancel(run_draft(llm, s, i, trace) for i, s in enumerate(specs))
-    trace.data["drafts"].sort(key=lambda d: d["index"])  # drafts finish in any order
+    # 4. Write (or revise the delivered story), judge and revise.
+    final = await write_and_revise(llm, spec, trace, text,
+                                   previous=session.story if is_feedback else None,
+                                   change=feedback)
+    ev = final.evaluation
+    summary = {"round": final.round, "all_passed": ev.all_passed,
+               "hard_failures": ev.hard_failures, "soft_failures": ev.soft_failures,
+               "overridden": ev.overridden}
 
-    if all("safety" in d.kept.evaluation.hard_failures for d in drafts):
-        return await _safety_fallback(llm, e, trace)
+    # 5. Final safety check: a story that fails safety is never shown. The session keeps the
+    #    last good story, so the user can try different feedback.
+    if "safety" in ev.hard_failures:
+        trace.set("final", {"status": "safety_message", **summary})
+        return PipelineResult(status="safety_message", story=None,
+                              message=CANNED_SAFETY_MESSAGE, trace_path=None, session=session)
 
-    with trace.stage("selection"):
-        chosen = await select(llm, list(drafts), trace)
-    ev = chosen.kept.evaluation
-    trace.set("final", {"status": "story", "source": "draft", "draft_index": chosen.index,
-                        "round": chosen.kept.round, "all_passed": ev.all_passed,
-                        "hard_failures": ev.hard_failures, "soft_failures": ev.soft_failures})
-    return PipelineResult(status="story", story=chosen.kept.text, message=None, trace_path=None)
+    # Other hard failures (e.g. wind_down) don't block: the best version we have is shown.
+    trace.set("final", {"status": "story", **summary})
+    return PipelineResult(status="story", story=final.text, message=None, trace_path=None,
+                          session=session.model_copy(update={"feedback": all_feedback,
+                                                             "spec": spec, "story": final}))
 
 
 def _usage_summary(calls: list[dict]) -> dict:
@@ -215,22 +197,26 @@ def _usage_summary(calls: list[dict]) -> dict:
             "by_stage": by_stage}
 
 
-async def run(request: str, llm: LLMClient | None = None) -> PipelineResult:
-    trace = Trace(request)
+async def _turn(session: StorySession, llm: LLMClient | None,
+                feedback: str | None = None) -> PipelineResult:
+    """Trace, budget and usage handling shared by the first story and every feedback turn."""
+    trace = Trace(session.request)
+    all_feedback = [*session.feedback, feedback] if feedback is not None else session.feedback
+    trace.set("feedback", all_feedback)
+    trace.set("turn", len(all_feedback))
     start = time.monotonic()
     try:
         if llm is None:
-            # One fresh client per run: its total_cost (the budget guard) is per instance.
+            # One fresh client per turn: its total_cost (the budget guard) is per instance.
             # Created inside `try` so a missing key still writes a trace.
-            llm = OpenRouterClient(on_usage=trace.on_usage)
-        result = await _run(request, llm, trace)
+            llm = AnthropicClient(on_usage=trace.on_usage)
+        result = await _run(session, llm, trace, feedback)
     except BudgetExceeded as exc:
-        # DECISION: running out of budget is expected behaviour, not a crash: tell the user
-        # kindly and keep the trace. Other errors (e.g. LLMError) still raise to the caller.
+        # Report budget exhaustion gracefully so feedback turns preserve the last good story.
         trace.set("error", f"BudgetExceeded: {exc}")
         trace.set("final", {"status": "error"})
         result = PipelineResult(status="error", story=None, message=BUDGET_MESSAGE,
-                                trace_path=None)
+                                trace_path=None, session=session)
     finally:  # the trace is written whatever happened above
         total = time.monotonic() - start
         trace.timings["total"] = total
@@ -240,7 +226,22 @@ async def run(request: str, llm: LLMClient | None = None) -> PipelineResult:
     return result.model_copy(update={"trace_path": trace_path})
 
 
+async def run(request: str, llm: LLMClient | None = None) -> PipelineResult:
+    """Start a conversation: a new session with the request, and its first story.
+    `result.session` is always set; its `story` is None if no story was delivered."""
+    return await _turn(StorySession(request=request), llm)
+
+
+async def give_feedback(session: StorySession, feedback: str,
+                        llm: LLMClient | None = None) -> PipelineResult:
+    """One more turn: revise the session's delivered story to make `feedback`'s change, through
+    the same gate -> extract -> judge -> guard path. Never asks for new ideas."""
+    if session.story is None:
+        raise ValueError("There is no story to give feedback on yet.")
+    return await _turn(session, llm, feedback)
+
+
 async def baseline(request: str, llm: LLMClient | None = None) -> str:
     """The original main.py behaviour, for comparison: one call, just the request."""
-    llm = llm or OpenRouterClient()
+    llm = llm or AnthropicClient()
     return await llm.text("", request, stage="baseline")

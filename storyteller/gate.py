@@ -1,7 +1,6 @@
-"""Gate stage: judges the REQUEST (is it safe and a story request?), not any story.
+"""Gate stage: one LLM call that judges the REQUEST with two checks (safety, relevance),
+not any story. Both must pass before extraction runs.
 Unsafe-but-reshapeable requests count as safe; the story prompt reshapes them."""
-# TODO(edgy-requests): requests like "a dragon who eats the villagers" are borderline. Decide
-# whether the gate should pass them (and let the judge catch it) or reject up front.
 from . import prompts
 from .models import GateResult
 
@@ -11,7 +10,9 @@ async def check_request(llm, request: str) -> GateResult:
 
 
 def gate_message(g: GateResult) -> str | None:
-    """Friendly rejection text, or None when the request may proceed."""
-    if g.safe and g.relevant:
+    """None when BOTH checks pass (the request may proceed); otherwise a friendly rejection
+    built from the evidence of whichever check failed (safety first)."""
+    if g.safety.passed and g.relevance.passed:
         return None
-    return f"{g.reason} Please try another request and I'll be happy to tell a story."
+    failed = g.safety if not g.safety.passed else g.relevance
+    return f"{failed.evidence} Please try another request and I'll be happy to tell a story."

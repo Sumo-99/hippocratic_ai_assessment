@@ -1,4 +1,4 @@
-openai
+anthropic>=2,<3
 pydantic>=2
 python-dotenv
 pytest

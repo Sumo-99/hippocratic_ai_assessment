@@ -1,26 +1,25 @@
 import pytest
 
-from storyteller import compare, config, feedback, judge, prompts
-from storyteller.fake import FakeLLM
-from storyteller.models import (Comparison, DraftVersion, Evaluation, JudgeResult,
-                                StorySpec, Verdict)
+from storyteller import config, feedback, judge, prompts
+from fakes import FakeLLM
+from storyteller.models import Character, Evaluation, JudgeResult, StorySpec, Verdict
 from string import Template
 
 DIMS = config.HARD + [d for d in config.SOFT if d != "length"]
 GOOD_STORY = " ".join(["word"] * 600)
+REQUEST = "Mia the mouse finds a hat in the barn"
 
 
 @pytest.fixture(autouse=True)
 def stub_prompts(monkeypatch):
     stubs = {"judge": Template("J $rubric_context | $category_checks"),
-             "compare": Template("which?"),
              "cozy": Template("## Structure\nx\n## Judge checks\n- cosy check\n")}
     monkeypatch.setattr(prompts, "load", lambda name: stubs.get(name, Template("stub")))
 
 
 def spec(**kw):
-    base = dict(category="cozy", characters=["Mia"], setting="a barn", premise="p",
-                mood="calm", worry=None, named_characters=True)
+    base = dict(category="cozy", characters=[Character(name="Mia", role="a mouse")], setting="a barn", premise="p",
+                listener=None)
     return StorySpec(**{**base, **kw})
 
 
@@ -34,30 +33,40 @@ def ev(hard=(), soft=(), words=600):
                       length_ok=True, hard_failures=list(hard), soft_failures=list(soft))
 
 
-def version(rnd, hard=()):
-    return DraftVersion(round=rnd, text=f"story{rnd}", evaluation=ev(hard=hard),
-                        feedback_sent=None)
-
-
-async def test_skips_ignored_even_if_judge_fails_them():
-    s = spec(named_characters=False, setting=None, premise=None, mood=None)
+async def test_skipped_dimensions_are_not_sent_and_recorded_as_skipped():
+    s = spec(characters=[], setting=None, premise=None)
+    # Even if a (fake) judge returned verdicts for them, skipped dimensions are not used.
     llm = FakeLLM({"judge": [judge_result(fail={"faithfulness_named",
-                                                "faithfulness_premise_mood"})]})
-    e = await judge.evaluate(llm, s, GOOD_STORY)
+                                                "faithfulness_premise"})]})
+    e = await judge.evaluate(llm, s, GOOD_STORY, REQUEST)
     assert e.hard_failures == [] and e.soft_failures == []
+    sent = set(llm.schemas[0][1].model_fields)
+    assert not sent & {"faithfulness_named", "faithfulness_premise"}
+    assert sent == set(DIMS) - {"faithfulness_named", "faithfulness_premise"}
+    for d in ("faithfulness_named", "faithfulness_premise"):
+        assert getattr(e.judge, d).passed is None
+    assert e.judge.safety.passed is True
+
+
+async def test_faithfulness_sent_when_spec_has_the_fields():
+    llm = FakeLLM({"judge": [judge_result()]})
+    await judge.evaluate(llm, spec(), GOOD_STORY, REQUEST)
+    sent = set(llm.schemas[0][1].model_fields)
+    assert {"faithfulness_named", "faithfulness_premise"} <= sent
 
 
 async def test_judge_failures_reported_and_prompt_has_context():
     llm = FakeLLM({"judge": [judge_result(fail={"safety", "engagement"})]})
-    e = await judge.evaluate(llm, spec(), GOOD_STORY)
+    e = await judge.evaluate(llm, spec(), GOOD_STORY, REQUEST)
     assert e.hard_failures == ["safety"] and e.soft_failures == ["engagement"]
     system = llm.calls[0][1]
-    assert "Mia" in system and "cosy check" in system
+    assert "Mia (a mouse)" in system and "cosy check" in system
+    assert REQUEST in system  # the raw request reaches the judge
 
 
 async def test_length_failure_is_soft():
     llm = FakeLLM({"judge": [judge_result()]})
-    e = await judge.evaluate(llm, spec(), "too short")
+    e = await judge.evaluate(llm, spec(), "too short", REQUEST)
     assert e.soft_failures == ["length"] and e.hard_failures == [] and not e.length_ok
 
 
@@ -77,55 +86,53 @@ def test_feedback_soft_when_no_hard():
     assert "fix engagement" in text and "1000" in text and "400" in text and "900" in text
 
 
-async def test_compare_both_orders_agree():
-    llm = FakeLLM({"compare": [Comparison(reason="r", winner="A"),
-                               Comparison(reason="r", winner="B")]})
-    assert await compare.compare_both_orders(llm, "X", "Y") == "x"
+def test_named_faithfulness_runs_when_only_a_setting_was_named():
+    assert "faithfulness_named" not in judge.skipped_dimensions(spec(characters=[]))
+    assert "faithfulness_named" in judge.skipped_dimensions(spec(characters=[], setting=None))
 
 
-async def test_compare_both_orders_disagree_is_tie():
-    llm = FakeLLM({"compare": [Comparison(reason="r", winner="A")] * 2})
-    assert await compare.compare_both_orders(llm, "X", "Y") == "tie"
+def test_category_checks_skipped_without_a_category():
+    assert "category_checks" in judge.skipped_dimensions(spec(category=None))
+    assert "category_checks" not in judge.skipped_dimensions(spec())
 
 
-async def test_keep_better_prefers_more_hard_passes_without_compare():
-    llm = FakeLLM({})
-    prev, new = version(1, hard=["safety"]), version(2)
-    kept, rec = await compare.keep_better(llm, prev, new)
-    assert kept is new and llm.calls == [] and rec["kept_round"] == 2
-    kept, _ = await compare.keep_better(llm, new, prev)
-    assert kept is new and llm.calls == []
+async def test_judge_is_never_told_about_revisions():
+    llm = FakeLLM({"judge": [judge_result()]})
+    await judge.evaluate(llm, spec(), GOOD_STORY, REQUEST)
+    _, system, user = llm.calls[0]
+    assert user == f"STORY:\n{GOOD_STORY}" and "revis" not in (system + user).lower()
 
 
-async def test_keep_better_tie_keeps_prev():
-    llm = FakeLLM({"compare": [Comparison(reason="r", winner="A")] * 2})
-    prev, new = version(1), version(2)
-    kept, rec = await compare.keep_better(llm, prev, new)
-    assert kept is prev and rec["result"] == "prev"
+# ---- precise override: the parent's exceptions reach the judge (17_feedback_live_smoke) -------
+
+def test_rubric_context_without_overrides_is_unchanged():
+    ctx = judge._rubric_context(spec(), REQUEST)
+    assert "exception" not in ctx.lower()
+    assert ctx.splitlines()[-1].startswith("Premise:")  # nothing appended after the variables
 
 
-async def test_keep_better_new_wins_both_orders():
-    # prev=x, new=y: order1 B (y), order2 A (y)
-    llm = FakeLLM({"compare": [Comparison(reason="r", winner="B"),
-                               Comparison(reason="r", winner="A")]})
-    prev, new = version(1), version(2)
-    kept, rec = await compare.keep_better(llm, prev, new)
-    assert kept is new and rec == {"rule": "pairwise:y", "result": "new", "kept_round": 2}
+def test_rubric_context_lists_the_parents_exceptions():
+    from storyteller.models import Override
+    sp = spec(overrides=[Override(quote="end on a cliffhanger", dimension="wind_down",
+                                  allow="end on a cliffhanger")])
+    ctx = judge._rubric_context(sp, REQUEST)
+    assert judge.EXCEPTIONS_HEADER in ctx
+    assert "- wind_down: end on a cliffhanger" in ctx
+    # the header tells every dimension not to fail or "fix" the exception, safety excepted
+    assert "never" in judge.EXCEPTIONS_HEADER.lower() and "safety" in judge.EXCEPTIONS_HEADER.lower()
 
 
-# ---- regressions from the wave 5 review --------------------------------------------------
-
-def test_invented_setting_does_not_trigger_named_faithfulness():
-    # Breadth mode: the brainstorm invents a setting; the user named nothing.
-    invented = spec(named_characters=False, setting="a moonlit forest", named_setting=False)
-    assert "faithfulness_named" in judge.skipped_dimensions(invented)
-    named = spec(named_characters=False, setting="a moonlit forest", named_setting=True)
-    assert "faithfulness_named" not in judge.skipped_dimensions(named)
+def test_rubric_context_never_lists_safety_even_if_smuggled():
+    from storyteller.models import Override
+    smuggled = Override.model_construct(quote="x", dimension="safety", allow="anything goes")
+    ctx = judge._rubric_context(spec(overrides=[smuggled]), REQUEST)
+    assert "anything goes" not in ctx and judge.EXCEPTIONS_HEADER not in ctx
 
 
-async def test_keep_better_never_trades_safe_for_unsafe():
-    llm = FakeLLM({})
-    safe_but_flawed = version(1, hard=["wind_down", "consistency"])
-    unsafe = version(2, hard=["safety"])
-    kept, rec = await compare.keep_better(llm, safe_but_flawed, unsafe)
-    assert kept is safe_but_flawed and rec["rule"] == "hard_checks" and llm.calls == []
+async def test_judge_system_prompt_carries_the_exceptions():
+    from storyteller.models import Override
+    sp = spec(overrides=[Override(quote="leave it hanging", dimension="wind_down",
+                                  allow="leave the ending open")])
+    llm = FakeLLM({"judge": [judge_result()]})
+    await judge.evaluate(llm, sp, GOOD_STORY, REQUEST)
+    assert "- wind_down: leave the ending open" in llm.calls[0][1]

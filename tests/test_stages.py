@@ -4,19 +4,16 @@ from string import Template
 import pytest
 
 from storyteller import prompts
-from storyteller.brainstorm import brainstorm
-from storyteller.extract import breadth_categories, extract, normalize, plan_drafts
-from storyteller.fake import FakeLLM
+from storyteller.extract import extract
+from fakes import FakeLLM
 from storyteller.gate import check_request, gate_message
-from storyteller.generate import (breadth_specs, build_system_prompt, depth_spec,
-                                  revise_story, write_story)
-from storyteller.llm import LLMError
-from storyteller.models import Brainstorm, Extraction, GateResult, Premise, StorySpec
+from storyteller.generate import build_system_prompt, revise_story, write_story
+from storyteller.models import Character, Check, Extraction, GateResult, StorySpec
 
 STUBS = {
     "base": "BASE $target_words", "cozy": "COZY", "silly": "SILLY", "adventure": "ADV",
-    "comfort": "COMFORT", "gentle_lesson": "LESSON", "gate": "GATE", "extract": "EXTRACT",
-    "brainstorm": "BRAIN $characters | $setting | $categories", "revise": "REVISE",
+    "comfort": "COMFORT", "gate": "GATE", "extract": "EXTRACT",
+    "revise": "REVISE",
 }
 
 
@@ -26,84 +23,80 @@ def stub_prompts(monkeypatch):
 
 
 def ext(**kw):
-    base = dict(characters=[], setting=None, premise=None, mood=None, worry=None, category=None)
+    base = dict(characters=[], setting=None, premise=None, listener=None, category=None)
     return Extraction(**{**base, **kw})
 
 
 def spec(**kw):
-    base = dict(category="cozy", characters=[], setting=None, premise=None, mood=None,
-                worry=None, named_characters=False)
+    base = dict(category="cozy", characters=[], setting=None, premise=None, listener=None)
     return StorySpec(**{**base, **kw})
 
 
-def test_gate_message_none_when_ok():
-    assert gate_message(GateResult(reason="fine", safe=True, relevant=True)) is None
+# ---- gate ---------------------------------------------------------------------------------
+
+def gate_result(safe=True, relevant=True, safety_ev="fine", relevance_ev="fine"):
+    return GateResult(safety=Check(evidence=safety_ev, passed=safe),
+                      relevance=Check(evidence=relevance_ev, passed=relevant))
 
 
-def test_gate_message_includes_reason():
-    msg = gate_message(GateResult(reason="Too scary.", safe=False, relevant=True))
+def test_gate_message_none_when_both_checks_pass():
+    assert gate_message(gate_result()) is None
+
+
+def test_gate_message_uses_the_failed_checks_evidence():
+    msg = gate_message(gate_result(safe=False, safety_ev="Too scary."))
     assert "Too scary." in msg and "try another request" in msg.lower()
+    msg = gate_message(gate_result(relevant=False, relevance_ev="Not a story."))
+    assert "Not a story." in msg
 
 
-async def test_check_request_and_extract_use_stages():
-    g = GateResult(reason="ok", safe=True, relevant=True)
-    llm = FakeLLM({"gate": [g], "extract": [ext(category="comfort", worry="dark")]})
+def test_gate_message_reports_safety_when_both_fail():
+    msg = gate_message(gate_result(safe=False, relevant=False, safety_ev="Unsafe.",
+                                   relevance_ev="Not a story."))
+    assert "Unsafe." in msg and "Not a story." not in msg
+
+
+async def test_gate_and_extract_are_separate_calls():
+    g = gate_result()
+    llm = FakeLLM({"gate": [g], "extract": [ext(category="comfort", premise="scared of the dark")]})
     assert await check_request(llm, "hi") == g
     assert (await extract(llm, "hi")).category == "comfort"
     assert [c[0] for c in llm.calls] == ["gate", "extract"]
 
 
-def test_plan_depth_when_premise():
-    assert plan_drafts(ext(premise="a lost kite")) == "depth"
+# ---- extraction ---------------------------------------------------------------------------
+
+async def test_extract_drops_empty_characters():
+    e = ext(characters=[Character(name=None, role=None), Character(name="Bob", role="a cat")])
+    llm = FakeLLM({"extract": [e]})
+    assert (await extract(llm, "hi")).characters == [Character(name="Bob", role="a cat")]
 
 
-def test_plan_breadth_when_no_premise():
-    assert plan_drafts(ext(characters=["Bo"])) == "breadth"
+def test_character_describe():
+    assert Character(name="Bob", role="Alice's cat").describe() == "Bob (Alice's cat)"
+    assert Character(name="Alice", role=None).describe() == "Alice"
+    assert Character(name=None, role="a badger").describe() == "a badger"
 
 
-def test_breadth_categories_known():
-    assert breadth_categories(ext(category="silly")) == ["silly"] * 3
+def test_spec_inherits_preferences_and_overrides_from_the_extraction():
+    """pipeline builds StorySpec(**extraction.model_dump()): the feedback (preferences) and overrides
+    reach the writer and judge with no copying step."""
+    from storyteller.models import Override
+    o = Override(quote="end on a cliffhanger", dimension="wind_down", allow="end on a cliffhanger")
+    e = ext(premise="a kite", preferences="End on a cliffhanger.", overrides=[o])
+    s = StorySpec(**e.model_dump())
+    assert s.preferences == "End on a cliffhanger." and s.overrides == [o]
+    plain = StorySpec(**ext(premise="a kite").model_dump())
+    assert plain.preferences is None and plain.overrides == []
 
 
-def test_breadth_categories_unknown():
-    assert breadth_categories(ext()) == ["cozy", "adventure", "silly"]
-
-
-def test_comfort_without_worry_normalized_to_cozy():
-    assert normalize(ext(category="comfort")).category == "cozy"
-    assert normalize(ext(category="comfort", worry="thunder")).category == "comfort"
-
-
-def _premises(n=3):
-    return [Premise(premise=f"p{i}", category="adventure", characters=["X"], setting="Y")
-            for i in range(n)]
-
-
-async def test_brainstorm_forces_named_chars_and_categories():
-    llm = FakeLLM({"brainstorm": [Brainstorm(premises=_premises())]})
-    out = await brainstorm(llm, ext(characters=["Alice", "Bob"], setting="a barn", category="silly"))
-    assert [p.category for p in out] == ["silly"] * 3
-    assert all(p.characters == ["Alice", "Bob"] and p.setting == "a barn" for p in out)
-    assert "Alice, Bob | a barn | silly, silly, silly" in llm.calls[0][1]
-
-
-async def test_brainstorm_keeps_model_chars_when_unnamed_and_uses_fallback_set():
-    llm = FakeLLM({"brainstorm": [Brainstorm(premises=_premises())]})
-    out = await brainstorm(llm, ext())
-    assert [p.category for p in out] == ["cozy", "adventure", "silly"]
-    assert out[0].characters == ["X"] and out[0].setting == "Y"
-
-
-async def test_brainstorm_rejects_wrong_count():
-    llm = FakeLLM({"brainstorm": [Brainstorm(premises=_premises(2))]})
-    with pytest.raises(LLMError):
-        await brainstorm(llm, ext())
-
+# ---- prompt assembly ----------------------------------------------------------------------
 
 def test_system_prompt_omits_absent_variables():
-    p = build_system_prompt(spec(characters=["Alice", "Bob"], setting="a barn"))
-    assert "Characters: Alice, Bob" in p and "Setting: a barn" in p
-    for absent in ("Mood:", "Worry:", "Premise:"):
+    p = build_system_prompt(spec(characters=[Character(name="Alice", role=None),
+                                Character(name="Bob", role="Alice's cat")], setting="a barn"))
+    assert "Characters: Alice; Bob (Alice's cat)" in p and "Setting: a barn" in p
+    for absent in ("Worry:", "Premise:"):
         assert absent not in p
     assert p.startswith("BASE 600") and "COZY" in p
 
@@ -112,33 +105,94 @@ def test_system_prompt_with_no_variables_has_no_trailing_lines():
     assert build_system_prompt(spec()) == "BASE 600\n\nCOZY"
 
 
-def test_depth_spec_falls_back_to_cozy():
-    s = depth_spec(ext(premise="a kite", characters=["Bo"]))
-    assert s.category == "cozy" and s.named_characters and s.premise == "a kite"
+def test_system_prompt_includes_listener():
+    assert build_system_prompt(spec(listener="daughter")).endswith("Listener: daughter")
 
 
-def test_breadth_specs_named_flag_only_for_user_names():
-    s = breadth_specs(ext(), _premises())
-    assert [x.category for x in s] == ["cozy", "adventure", "silly"]
-    assert not any(x.named_characters for x in s)
-    assert all(x.named_characters for x in breadth_specs(ext(characters=["Bo"]), _premises()))
+def test_system_prompt_without_category_has_no_bundle():
+    p = build_system_prompt(spec(category=None, premise="a kite"))
+    assert p == "BASE 600\n\nPremise: a kite"
+
+
+PREFS_BLOCK = ("## Feedback on this story (this comes first)\n"
+               "Where this feedback conflicts with anything below, follow the feedback, "
+               "except the Safety rules, which always apply.\n"
+               "Make the dragon funnier.")
+
+
+def test_preferences_block_sits_on_top_of_the_prompt():
+    p = build_system_prompt(spec(preferences="Make the dragon funnier.", premise="a kite"))
+    assert p == PREFS_BLOCK + "\n\nBASE 600\n\nCOZY\n\nPremise: a kite"
+    assert p.index("Make the dragon funnier.") < p.index("BASE")
+    assert "except the Safety rules, which always apply" in p
+
+
+def test_no_preferences_means_prompt_unchanged():
+    # Byte-identical to a request-only run: no header, no extra blank lines.
+    assert build_system_prompt(spec()) == "BASE 600\n\nCOZY"
+    assert build_system_prompt(spec(preferences="")) == "BASE 600\n\nCOZY"
+    assert "wishes" not in build_system_prompt(spec(premise="a kite", listener="son"))
+
+
+async def test_revise_keeps_preferences_on_top():
+    llm = FakeLLM({"revise": ["better"]})
+    await revise_story(llm, spec(preferences="Make the dragon funnier."), "story", "funnier")
+    system = llm.calls[0][1]
+    assert system.startswith(PREFS_BLOCK + "\n\nBASE 600") and system.endswith("REVISE")
 
 
 async def test_write_and_revise():
     llm = FakeLLM({"generate": ["story"], "revise": ["better"]})
-    sp = spec(mood="calm")
+    sp = spec(premise="thunder")
     assert await write_story(llm, sp) == "story"
     assert await revise_story(llm, sp, "story", "shorter") == "better"
     stage, system, user = llm.calls[1]
-    assert stage == "revise" and system.endswith("REVISE") and "Mood: calm" in system
+    # Revision = the same constraints as the first draft + the revise rules, then the full
+    # previous story and the feedback in the user message.
+    assert stage == "revise" and system.startswith(build_system_prompt(sp))
+    assert system.endswith("REVISE") and "Premise: thunder" in system
     assert "story" in user and "shorter" in user
 
 
-def test_named_setting_tracks_only_what_the_user_named():
-    vague = Extraction(characters=[], setting=None, premise=None, mood=None, worry=None,
-                       category=None)
-    premises = [Premise(premise=f"p{i}", category="cozy", characters=["Owl"], setting="a tree")
-                for i in range(3)]
-    assert all(not s.named_setting for s in breadth_specs(vague, premises))
-    with_setting = vague.model_copy(update={"setting": "a lighthouse", "premise": "p"})
-    assert depth_spec(with_setting).named_setting is True
+# ---- story ideas for requests with no premise -----------------------------------------------
+
+def idea():
+    from storyteller.models import StoryOption
+    return StoryOption(characters="a badger and a heron", setting="a reed bed",
+                       situation="mending a nest")
+
+
+def test_picked_idea_fills_only_what_the_request_left_empty():
+    p = build_system_prompt(spec(idea=idea(), listener="son"))
+    assert p == ("BASE 600\n\nCOZY\n\nCharacters: a badger and a heron\nSetting: a reed bed\n"
+                 "Premise: mending a nest\nListener: son")
+    # Named characters win over the idea's; the idea still supplies setting and premise.
+    p = build_system_prompt(spec(idea=idea(), characters=[Character(name="Alice", role=None)]))
+    assert "Characters: Alice\n" in p and "badger" not in p
+    assert "Setting: a reed bed" in p and "Premise: mending a nest" in p
+
+
+async def test_options_prompt_asks_for_the_category_and_keeps_named_things(monkeypatch):
+    from storyteller.models import StoryOption, StoryOptions
+    from storyteller.options import get_options
+    monkeypatch.setattr(prompts, "load", lambda name: Template("OPTIONS $story_type|$keep"))
+    opts = StoryOptions(options=[StoryOption(characters="c", setting="s", situation="x")] * 5)
+    llm = FakeLLM({"options": [opts, opts]})
+    await get_options(llm, spec(category="silly"))
+    await get_options(llm, spec(category=None, setting="a barn",
+                                characters=[Character(name="Bob", role="Alice's cat")]))
+    assert llm.calls[0][1] == "OPTIONS a silly, funny bedtime story|"
+    assert llm.calls[1][1] == ("OPTIONS a bedtime story|Every option must use these, exactly as "
+                               "given:\nCharacters: Bob (Alice's cat)\nSetting: a barn")
+
+
+def test_options_path_has_no_hand_written_themes_or_premises():
+    # The model proposes all 5 options; nothing human-written steers them.
+    import re
+    from pathlib import Path
+    from string import Template as T
+    import storyteller.options as options
+    text = (Path(options.__file__).parent / "prompts" / "options.md").read_text()
+    template = T(re.sub(r"<!--.*?-->", "", text, flags=re.S))
+    assert set(template.get_identifiers()) == {"story_type", "keep"}
+    assert "theme" not in template.template.lower()

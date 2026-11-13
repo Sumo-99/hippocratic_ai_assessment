@@ -1,7 +1,7 @@
 # Category: silly
 
 ## Structure
-1. Setup: meet a character with one ridiculous wish or habit (a cow who wants to fly, a teapot who sneezes bubbles).
+1. Setup: meet a character with one ridiculous wish or habit. Invent both the character and the wish fresh for this story; the funnier the mismatch between who they are and what they want, the better.
 2. Attempt one: a funny try that doesn't work.
 3. Attempt two: bigger and sillier.
 4. Attempt three: the silliest, ending in a harmless surprise.
@@ -10,7 +10,7 @@
 
 ## Do / Don't
 - Do use the rule of three: three attempts, each sillier than the last.
-- Do use playful language: sound words (boing, splat, whoosh), funny names, gentle repetition.
+- Do use playful language: sound words invented to match what is happening, funny names, gentle repetition.
 - Do keep the surprise harmless and kind.
 - Don't make jokes from meanness, teasing, embarrassment or someone getting hurt.
 - Don't use potty humor or anything gross.
