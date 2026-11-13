@@ -2,6 +2,16 @@
 from . import config, prompts
 from .models import Extraction, StorySpec, describe_characters
 
+# EXPERIMENT condition A: added only when the request names no characters, setting or premise.
+INVENT_INSTRUCTION = (
+    "The request gives no characters, setting or premise. Invent your own: choose characters, "
+    "a setting and a small situation for this story yourself. Make them specific and fresh "
+    "rather than the most obvious choice.")
+
+
+def names_nothing(spec: StorySpec) -> bool:
+    return not (spec.characters or spec.setting or spec.premise)
+
 
 def make_spec(e: Extraction) -> StorySpec:
     """The extraction becomes the story's variables.
@@ -24,6 +34,11 @@ def build_system_prompt(spec: StorySpec) -> str:
     if spec.category:  # no category -> no bundle, the base prompt alone
         parts.append(prompts.load(spec.category).substitute())
     lines = []
+    if spec.idea is not None:  # condition B: the picked option fills the empty variables
+        lines += [f"Characters: {spec.idea.characters}", f"Setting: {spec.idea.setting}",
+                  f"Premise: {spec.idea.situation}"]
+    elif config.VAGUE_MODE == "invent" and names_nothing(spec):  # condition A
+        lines.append(INVENT_INSTRUCTION)
     if spec.characters:
         lines.append("Characters: " + describe_characters(spec.characters))
     for label, value in (("Setting", spec.setting), ("Premise", spec.premise),

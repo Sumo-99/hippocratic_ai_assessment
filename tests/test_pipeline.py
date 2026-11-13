@@ -264,3 +264,44 @@ async def test_verbose_details_print_from_trace(capsys):
     out = capsys.readouterr().out
     assert "category: adventure" in out and "revisions: 1" in out and "final: PASS" in out
     assert "total cost: $0.0000" in out and result.trace_path in out
+
+
+# ---- EXPERIMENT: condition B -------------------------------------------------------------
+
+def vague_extraction(*_):
+    return Extraction(characters=[], setting=None, premise=None, worry=None, listener=None,
+                      category=None)
+
+
+def five_options(*_):
+    from storyteller.models import StoryOption, StoryOptions
+    return StoryOptions(options=[StoryOption(characters=f"c{i}", setting=f"s{i}",
+                                             situation=f"x{i}") for i in range(5)])
+
+
+def options_fake():
+    return FakeLLM({"gate": [gate_ok], "extract": [vague_extraction], "options": [five_options],
+                    "generate": [generate] * MANY, "judge": [judge_from(lambda t: set())] * MANY})
+
+
+async def test_options_mode_logs_list_and_pick_and_feeds_the_writer(monkeypatch):
+    monkeypatch.setattr(config, "VAGUE_MODE", "options")
+    monkeypatch.setattr(config, "OPTIONS_SEED", "7")
+    llm = options_fake()
+    result = await pipeline.run("tell me a story", llm)
+    assert stages(llm) == ["gate", "extract", "options", "generate", "judge"]
+    t = read_trace(result)
+    assert len(t["options"]["list"]) == 5 and t["options"]["seed"] == 7
+    i = t["options"]["picked_index"]
+    assert t["spec"]["idea"]["characters"] == f"c{i}"
+    assert f"Premise: x{i}" in llm.calls[3][1]  # the writer's system prompt
+    # same seed + same request -> same pick
+    again = read_trace(await pipeline.run("tell me a story", options_fake()))
+    assert again["options"]["picked_index"] == i
+
+
+async def test_options_mode_skipped_when_request_names_something(monkeypatch):
+    monkeypatch.setattr(config, "VAGUE_MODE", "options")
+    llm = fake(judge_from(lambda t: set()))
+    await pipeline.run("Alice and her cat Bob fly to the moon", llm)
+    assert "options" not in stages(llm)

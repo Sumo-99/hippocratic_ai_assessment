@@ -25,6 +25,13 @@ LATENCY_BUDGET_S = int(os.getenv("LATENCY_BUDGET_S", 60))
 RETRIES = int(os.getenv("RETRIES", 3))
 
 FALLBACK_CATEGORY = "cozy"  # used when the request has no clear category
+
+# EXPERIMENT (skeleton_independent_thinking_experiement): what to do when a request names no
+# characters, setting or premise. "off" = nothing extra (as on skeleton); "invent" = condition A,
+# one instruction line telling the writer to invent its own; "options" = condition B, one extra
+# LLM call for 5 story options, code picks one at random. OPTIONS_SEED fixes the pick.
+VAGUE_MODE = os.getenv("VAGUE_MODE", "off")
+OPTIONS_SEED = os.getenv("OPTIONS_SEED")  # None = unseeded
 RUNS_DIR = os.getenv("RUNS_DIR", "runs")
 
 # Judge dimensions. HARD failures block a story; SOFT ones only trigger revision.

@@ -77,6 +77,17 @@ class JudgeResult(BaseModel):
     category_checks: Verdict
 
 
+class StoryOption(BaseModel):
+    """EXPERIMENT condition B: one model-generated idea for a vague request."""
+    characters: str
+    setting: str
+    situation: str
+
+
+class StoryOptions(BaseModel):
+    options: list[StoryOption]
+
+
 # ---- types only our code uses ------------------------------------------------------------
 
 class StorySpec(BaseModel):
@@ -88,6 +99,9 @@ class StorySpec(BaseModel):
     premise: str | None
     worry: str | None
     listener: str | None = None
+    # EXPERIMENT condition B: the randomly picked option. Only the writer sees it; the judge
+    # still treats the request as naming nothing, so judging matches the other conditions.
+    idea: StoryOption | None = None
 
 
 class Evaluation(BaseModel):

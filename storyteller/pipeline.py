@@ -11,9 +11,10 @@ from . import config
 from .extract import extract
 from .feedback import build_feedback
 from .gate import check_request, gate_message
-from .generate import make_spec, revise_story, write_story
+from .generate import make_spec, names_nothing, revise_story, write_story
 from .judge import evaluate
 from .llm import BudgetExceeded, LLMClient, OpenRouterClient
+from .options import get_options, pick
 from .models import DraftVersion, PipelineResult, StorySpec
 from .trace import Trace
 
@@ -96,6 +97,17 @@ async def _run(request: str, llm, trace: Trace) -> PipelineResult:
         e = await extract(llm, request)
     trace.set("extraction", e.model_dump())
     spec = make_spec(e)
+
+    # EXPERIMENT condition B: a vague request gets 5 model-made options; code picks one.
+    if config.VAGUE_MODE == "options" and names_nothing(spec):
+        with trace.stage("options"):
+            options = await get_options(llm)
+        seed = int(config.OPTIONS_SEED) if config.OPTIONS_SEED is not None else None
+        i = pick(options, seed, request)
+        trace.set("options", {"list": [o.model_dump() for o in options], "picked_index": i,
+                              "seed": seed})
+        spec = spec.model_copy(update={"idea": options[i]})
+    trace.set("vague_mode", config.VAGUE_MODE)
 
     # 3. Write, judge and revise.
     final = await write_and_revise(llm, spec, trace, request)

@@ -133,3 +133,31 @@ async def test_write_and_revise():
     assert stage == "revise" and system.startswith(build_system_prompt(sp))
     assert system.endswith("REVISE") and "Worry: thunder" in system
     assert "story" in user and "shorter" in user
+
+
+# ---- EXPERIMENT: condition A / B prompt lines ---------------------------------------------
+
+def test_invent_instruction_only_when_mode_on_and_nothing_named(monkeypatch):
+    from storyteller import config
+    from storyteller.generate import INVENT_INSTRUCTION
+    monkeypatch.setattr(config, "VAGUE_MODE", "off")
+    assert INVENT_INSTRUCTION not in build_system_prompt(spec())
+    monkeypatch.setattr(config, "VAGUE_MODE", "invent")
+    assert build_system_prompt(spec()) == "BASE 600\n\nCOZY\n\n" + INVENT_INSTRUCTION
+    assert INVENT_INSTRUCTION in build_system_prompt(spec(listener="son"))  # listener isn't content
+    for named in (dict(premise="a kite"), dict(setting="a barn"),
+                  dict(characters=[Character(name="Bo", role=None)])):
+        assert INVENT_INSTRUCTION not in build_system_prompt(spec(**named))
+
+
+def test_picked_option_becomes_characters_setting_premise(monkeypatch):
+    from storyteller import config
+    from storyteller.generate import INVENT_INSTRUCTION
+    from storyteller.models import StoryOption
+    monkeypatch.setattr(config, "VAGUE_MODE", "options")
+    idea = StoryOption(characters="a badger and a heron", setting="a reed bed",
+                       situation="mending a nest")
+    p = build_system_prompt(spec(idea=idea, listener="son"))
+    assert p.endswith("Characters: a badger and a heron\nSetting: a reed bed\n"
+                      "Premise: mending a nest\nListener: son")
+    assert INVENT_INSTRUCTION not in p
