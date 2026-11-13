@@ -3,7 +3,7 @@ stage: 20_anthropic_invocation
 status: in_progress   # set to done after the live smoke and the user's review
 model: orchestrator (opus)
 completed: 2026-11-13
-live_api_cost_usd: 0.00
+live_api_cost_usd: 0.005
 reviewer_verdict: n/a
 ---
 
@@ -34,8 +34,14 @@ reviewer_verdict: n/a
 - `git diff --stat skeleton -- tests/test_llm.py` → empty (the OpenRouter regression guard is untouched).
 - `LLM_PROVIDER=nope`: `run()` raises a `ValueError` that names the allowed values, and still writes a trace.
 
+- **Live smoke (2026-11-13, user-approved, real Anthropic key, `LLM_PROVIDER=anthropic`):** every structured schema was accepted.
+  - "A story about a shy dragon who loves baking": PASS, 0 revisions, $0.0018. Calls: gate, extract, generate, judge. Trace `runs/20261113T170849070818Z-…json`.
+  - "tell me a story": PASS, 0 revisions, $0.0022. Calls: gate, extract, options, generate, judge. Trace `runs/20261113T170915291958Z-…json`.
+  - `--baseline "a cat story"`: exit 0, about 400 words, no system prompt. Run twice because the first output was cut off by `head`, so there were 4 live runs, not 3.
+  - Total about $0.005.
+
 ## Open issues / for the human reviewer
-- **Not yet verified live:** whether Anthropic's structured outputs accept every pydantic schema (`anyOf` with null, `enum`, `$defs`, the judge's runtime-built schema). A rejection shows as a fast `LLMError: <stage>: HTTP 400`. The Task 5 live smoke covers this.
+- Not exercised live: the `revise` stage, because both stories passed in round 0. It is a plain text call on the same code path as `generate`, which did run live.
 - No cache-token accounting: we never enable prompt caching, so `input_tokens` + `output_tokens` is the full bill.
 
 ## Files touched (uncommitted)

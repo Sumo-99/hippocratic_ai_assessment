@@ -27,10 +27,10 @@ Do NOT load: other stages' folders, `docs/SPEC.md`, `runs/`, `.env`.
 - [x] Task 3: `storyteller/clients.py` (`build_client`), pipeline swap, `test_pipeline.py` target rename, `tests/test_clients.py`, `tests/test_llm_contract.py` (237 passed)
 - [x] Task 4: README + OPEN_QUESTIONS, `HANDOFF.md` (status in_progress until Task 6)
 - [x] Opus review of the whole diff: no blocking findings. Offline check with the real SDK + `httpx2.MockTransport`: body keys are exactly max_tokens, messages, model, output_config, system, thinking; the real `Message` parses; cost is right.
-- [ ] Task 5: live smoke (needs the user's OK; the user puts `ANTHROPIC_API_KEY` in this worktree's `.env`)
+- [x] Task 5: live smoke, user-approved: 2 pipeline runs PASS + baseline OK, about $0.005 total, all schemas accepted (details in HANDOFF.md)
 - [ ] Task 6: user review, then commit
 
-Next step: WAITING ON THE USER for (a) `ANTHROPIC_API_KEY` in this worktree's `.env` and (b) an OK for the live smoke: 3 runs on claude-haiku-5-5, est. ≤ $0.04. Commands: `LLM_PROVIDER=anthropic $PY main.py "A story about a shy dragon who loves baking" --verbose`, `LLM_PROVIDER=anthropic $PY main.py "tell me a story" --verbose`, `LLM_PROVIDER=anthropic $PY main.py "a cat story" --baseline`.
+Next step: Task 6. The user reviews `git diff skeleton` (walkthrough, Q&A, data flow), then commit the code on anthropic_invocation. Nothing is pushed.
 
 ## Outputs
 - Code left **uncommitted** until the user's review (Task 6). Notes in `store/` may be committed.
