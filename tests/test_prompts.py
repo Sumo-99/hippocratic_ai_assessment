@@ -66,6 +66,16 @@ def test_judge_names_every_dimension():
     assert "revis" not in text.lower()
 
 
+@pytest.mark.parametrize("name", sorted(KEYS))
+def test_no_concrete_story_examples_leak_into_prompts(name):
+    # Guards against example objects/names being copied into every story (the convergence
+    # test found cozy stories full of the cozy prompt's own examples).
+    text = load(name).template.lower()
+    for word in ("cocoa", "little boat", "moon is a friend", "lullaby", "milo",
+                 "dragon who eats", "can become a race"):
+        assert word not in text, f"{name}.md contains example text {word!r}"
+
+
 def test_base_states_target_length():
     filled = load("base").substitute(target_words="600")
     assert "500–700 words" in filled and "600" in filled

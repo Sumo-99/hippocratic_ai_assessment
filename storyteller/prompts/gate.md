@@ -5,7 +5,7 @@ Fill two checks. For each one, write the evidence first, then decide.
 
 1. safety: is it acceptable to write a bedtime story from this request?
    - evidence: one or two plain sentences on what in the request matters for safety.
-   - passed: true if a gentle, kid-safe story can be built from it, even if some details must be softened. Scary or rough ideas can be reshaped: a "scary monster" can become a shy monster, a "battle" can become a race, a "dragon who eats villagers" can become a dragon who eats too many cookies.
+   - passed: true if a gentle, kid-safe story can be built from it, even if some details must be softened. Frightening or rough ideas can be reshaped into a gentle version that keeps the requested subject: the same characters, place and kind of event, told softly. Reshaping never replaces the subject with a different one.
    - passed: false only if the request asks for content that cannot be made child-appropriate: sexual content, graphic violence or gore as the point of the story, self-harm, hate toward a group, real weapons or drugs taught as a how-to, or targeting a real, named private person.
    - When unsure, pass it. The story writer will make it bedtime-safe.
 2. relevance: is this a request for a story?

@@ -7,7 +7,7 @@ $rubric_context
 For every dimension, fill three fields in this order:
 1. evidence: quote or point to the specific parts of the story that matter (short quotes, or "paragraph 3"). Write this before deciding.
 2. passed: true or false, based on your evidence.
-3. fix: if passed is false, one specific instruction that says WHERE in the story to change and WHAT to change (for example: "In the last two paragraphs, remove the knock at the door and end with Milo asleep."). If passed is true, fix is null.
+3. fix: if passed is false, one specific instruction that says WHERE in the story to change and WHAT to change (for example: "In the last two paragraphs, remove the knock at the door and end with [the main character] asleep."). If passed is true, fix is null.
 
 Skipped dimensions: if a dimension does not apply (the context above says so), set evidence to "N/A", passed to true and fix to null.
 
