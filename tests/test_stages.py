@@ -157,23 +157,25 @@ def test_is_vague_only_when_nothing_is_named():
 async def test_options_prompt_asks_for_the_requests_category(monkeypatch):
     from storyteller.models import StoryOption, StoryOptions
     from storyteller.options import get_options
-    monkeypatch.setattr(prompts, "load", lambda name: Template("OPTIONS $story_type | $steer"))
+    monkeypatch.setattr(prompts, "load", lambda name: Template("OPTIONS $story_type"))
     opts = StoryOptions(options=[StoryOption(characters="c", setting="s", situation="x")] * 5)
     llm = FakeLLM({"options": [opts, opts]})
-    await get_options(llm, "silly", "a kitchen")
-    await get_options(llm, None, "the seaside")
-    assert llm.calls[0][1] == "OPTIONS a silly, funny bedtime story | a kitchen"
-    assert llm.calls[1][1] == "OPTIONS a calm, cozy bedtime story | the seaside"
+    await get_options(llm, "silly")
+    await get_options(llm, None)
+    assert llm.calls[0][1] == "OPTIONS a silly, funny bedtime story"
+    assert llm.calls[1][1] == "OPTIONS a calm, cozy bedtime story"
 
 
-def test_steers_avoid_the_default_palette_and_draws_repeat_with_a_seed():
-    from storyteller.options import STEERS, pick_steer
-    assert 20 <= len(STEERS) <= 30 and len(set(STEERS)) == len(STEERS)
-    for s in STEERS:
-        for word in ("moon", "wood", "forest", "meadow", "pond", "lantern", "garden",
-                     "lighthouse", "cottage", "pip"):
-            assert word not in s.lower(), f"steer {s!r} is on the default palette ({word})"
-    assert pick_steer(7, "tell me a story") == pick_steer(7, "tell me a story")
-    assert pick_steer(7, "tell me a story") in STEERS
-    requests = [f"request {i}" for i in range(40)]
-    assert len({pick_steer(7, r) for r in requests}) > 10  # different requests, spread out
+def test_options_path_has_no_hand_written_themes_or_premises():
+    # EXPERIMENT: the model proposes all 5 options; nothing human-written steers them.
+    import re
+    from pathlib import Path
+    from string import Template as T
+    import storyteller.options as options
+    text = (Path(options.__file__).parent / "prompts" / "options.md").read_text()
+    template = T(re.sub(r"<!--.*?-->", "", text, flags=re.S))
+    assert set(template.get_identifiers()) == {"story_type"}
+    assert "theme" not in template.template.lower()
+    assert not hasattr(options, "STEERS") and not hasattr(options, "pick_steer")
+
+
