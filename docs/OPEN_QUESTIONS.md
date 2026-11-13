@@ -6,7 +6,7 @@ Every `# DECISION:` marker in the code, the spec overrides, the simplification c
 
 The first build implemented the full brief: three drafts for vague requests, a premise brainstorm, LLM pairwise comparison in both orders, cross-draft selection and a cozy fallback draft. That build is preserved on branch `skeleton_extensive`. The author chose to start smaller and let evals decide where complexity is worth adding back. What changed:
 
-- **One draft per request.** No depth/breadth branch and no brainstorm. For a vague request, one small call asks for 5 story ideas and code picks one at random (added 2026-11-13, see "Story options for vague requests" below).
+- **One draft per request.** No depth/breadth branch and no brainstorm. For a request with no premise, one small call asks for 5 story ideas and code picks one at random (added 2026-11-13, see "Story ideas for requests with no premise" below).
 - **The gate and extraction stay two separate calls.** A request that fails the gate stops before extraction is paid for.
 - **No LLM comparison anywhere.** Keep-better is a code-only regression guard (see `pipeline.keep_better`):
   - Only hard failures count. Soft failures play no part.
@@ -14,16 +14,23 @@ The first build implemented the full brief: three drafts for vague requests, a p
   - Otherwise the version with fewer hard failures wins, and a tie goes to the new version.
 - **Revisions start from the kept version**, in full, under the same system prompt as the first draft plus the revise rules (author confirmed "option A").
 - **No fallback draft.** If the final version fails safety, the canned message is shown instead.
-- **No `mood` field.** The category carries the tone (silly = funny, cozy = calm, adventure = exciting). Any tone it doesn't cover goes into the premise in a few words, never as invented events. The rubric item became `faithfulness_premise`. `worry` stays: it is filled only when the request states a fear, and comfort requires it (checked in code by `normalize`).
+- **No `mood` field.** The category carries the tone (silly = funny, cozy = calm, adventure = exciting). Any tone it doesn't cover goes into the premise in a few words, never as invented events. The rubric item became `faithfulness_premise`.
 - **The gate returns two checks.** `safety` and `relevance`, each `Check {evidence, passed}`, in one call. Both must pass. The rejection message uses the failed check's evidence (safety first if both fail). `Check` is separate from the judge's `Verdict` because a request has no "fix".
 
-## Story options for vague requests (2026-11-13)
+## Story ideas for requests with no premise (2026-11-13)
 
 Tested as condition B in `docs/findings/independent_thinking_experiement.md` (10 vague requests, one run each): letting the writer invent its own idea converged on one template, while a random pick from 5 model-made options gave 10 distinct premises. Changes from the tested version:
-- **Any vague request, not only cozy.** The options prompt asks for the spec's category ("a silly, funny bedtime story", ...); the tested prompt always said "calm".
-- **A worry counts as named** (`options.is_vague`, DECISION). "my son is scared of the dark" still goes straight to the writer, so the story stays about the fear.
+- **Any category, not only cozy.** The options prompt asks for the request's category ("a silly, funny bedtime story", ...), or "a bedtime story" when there is none; the tested prompt always said "calm".
+- **Triggered by a missing premise, not by "nothing named".** "Alice and her cat Bob" has characters but no plot; without ideas the writer would invent one and likely converge as vague requests did. The 5 ideas keep the named characters and setting, and the pick fills only the empty fields. Not yet run live for named-but-no-premise requests.
+- Known weak spot: the experiment's option lists repeated across requests (Pip in 9 of 10 lists, a moonlit woodland animal as option 1 in all 10). Named characters make this matter less; fully empty requests still see it.
 
-- **A random theme steers the options call.** The experiment's option lists repeated across requests (Pip in 9 of 10 lists, a moonlit woodland animal as option 1 in all 10). Code now draws one of 28 curated places/times (`options.STEERS`) and the prompt asks for all 5 options around it. Code controls the space, as the old seed list did; the model fills in characters and specifics, as in condition B. The steers are places and times only (DECISION), and avoid the default palette (moon, woodland, meadow, pond, lantern, garden, lighthouse, cottage); a test checks this. "deep winter" is kept, although snow was common in the experiment's lists. Not yet run live.
+## Minification (2026-11-13)
+
+Simplified so each rule lives in one place and the system can be stated in three rules (see `ARCHITECTURE.md`):
+- **`worry` removed.** A child's fear is the premise ("scared of the dark") with category comfort. `normalize`'s "comfort needs a worry" rule is gone; the extract prompt already says "no worry, no comfort".
+- **`gentle_lesson` removed.** Categories are adventure, silly, comfort, cozy. Moral-choice requests ("a story about sharing") now get the premise and no recipe.
+- **No cozy fallback.** `FALLBACK_CATEGORY` and `make_spec` are gone: no category means the base prompt alone, even for "tell me a story" (the 5 ideas give it a plot). Untested live; the base prompt's bedtime shape and the judge's `wind_down` check keep endings calm.
+- **One check per condition.** "Is there a premise?" is checked only in `pipeline._run`; "is there a category?" only where a recipe is loaded (writer prompt, judge skip). `StorySpec` is the extraction plus the picked idea.
 
 ## DECISION entries (in code)
 
@@ -31,7 +38,7 @@ Tested as condition B in `docs/findings/independent_thinking_experiement.md` (10
 2. **`storyteller/llm.py:77` retry policy.** Chosen: 4xx other than 429 fails immediately as `LLMError`. 429, 5xx, connection and validation errors retry, waiting `2**attempt` seconds. Alternative: retry everything.
 3. **`storyteller/llm.py:115` missing cost.** Chosen: if OpenRouter omits `usage.cost`, estimate it from token counts at the list price in `config.py`, so the budget guard can't silently read zero. In the 3 sample runs `usage.cost` was always present.
 4. **`storyteller/config.py:10` fixed endpoint and model.** Chosen: `BASE_URL` and `MODEL` are not env-overridable, so a stray shell variable can't redirect the key or swap the model. Alternative: allow overrides with a prefix.
-5. **`storyteller/extract.py:13` comfort without a worry.** Chosen: code changes the category to cozy. Alternative: trust the model, or ask the user.
+5. *(removed 2026-11-13: the comfort-without-worry rule went with the `worry` field.)*
 6. **`storyteller/judge.py:59` failures computed in code.** Chosen: failures come from each dimension's `passed` flag, never the judge's own summary, and skipped dimensions are dropped. Alternative: trust the judge's summary.
 7. **`storyteller/pipeline.py:41` guard puts safety first.** Chosen: compare `(fails safety?, number of hard failures)`. Alternative: count only, where a version failing only safety (1) would beat one failing two other hard checks (2).
 8. **`storyteller/pipeline.py:144` budget exhaustion.** Chosen: `BudgetExceeded` becomes a friendly message with `status="error"`, and the trace is kept. Other errors (`LLMError`, missing key) still raise to the CLI.

@@ -26,11 +26,10 @@ flowchart TD
     U["User request"]:::io
     GATE["Gate: one call, two checks on the REQUEST: safety and relevance (evidence, then pass/fail)"]:::llm
     REJ["Friendly message built from the failed check's evidence: please try another request"]:::io
-    EXT["Extraction: characters, setting, premise, worry, category"]:::llm
-    SPEC["Make spec: comfort without a worry becomes cozy; no category becomes cozy"]:::code
-    STEER["Code draws one random theme from a curated list (options.STEERS)"]:::code
-    OPTS["Story options (vague requests only): 5 ideas of the spec's category, around that theme"]:::llm
-    PICK["Code picks one at random; it fills Characters / Setting / Premise for the writer"]:::code
+    EXT["Extraction: characters, setting, premise, listener, category (empty if not in the request)"]:::llm
+    PREM{"Premise given?"}:::code
+    OPTS["Story ideas: 5 ideas of the category that keep the named characters and setting"]:::llm
+    PICK["Code picks one at random; it fills only what the request left empty"]:::code
     LOOP["Write, judge and revise loop (see Diagram 2)"]:::llm
     RUBRIC["Rubric: 4 hard + 6 soft checks"]:::code
     SAFE{"Final story passes safety?"}:::code
@@ -41,9 +40,9 @@ flowchart TD
     U --> GATE
     GATE -->|"either check fails"| REJ
     REJ -.->|"user tries again"| U
-    GATE -->|ok| EXT --> SPEC
-    SPEC -->|"nothing named"| STEER --> OPTS --> PICK --> LOOP
-    SPEC -->|"something named"| LOOP
+    GATE -->|ok| EXT --> PREM
+    PREM -->|no| OPTS --> PICK --> LOOP
+    PREM -->|yes| LOOP
     RUBRIC -.- LOOP
     LOOP --> SAFE
     SAFE -->|yes| OUT
@@ -55,7 +54,11 @@ flowchart TD
     classDef io fill:#f3f3f3,stroke:#666,color:#222
 ```
 
-A request is vague when extraction finds no characters, setting, premise or worry. For those, code first draws one theme at random from a curated list of 28 places and times (`options.STEERS`: "a city rooftop", "a bakery before dawn", ...). One extra call (`storyteller/options.py`, prompt `prompts/options.md`) then asks for 5 distinct story ideas of the spec's category around that theme, and code picks one at random (`OPTIONS_SEED` makes both draws repeatable per request). The theme keeps the 5 ideas off the model's default palette; the model still invents the characters and specifics. The pick goes to the writer only; the judge still sees a request that named nothing. The trace logs the theme, the full list and the pick. Why: when the writer invented its own idea, vague requests converged on one template; see `docs/findings/independent_thinking_experiement.md`.
+Three rules decide what the writer gets:
+
+1. **Extract** characters, setting, premise and category. Anything not in the request stays empty; nothing is guessed.
+2. **Category → recipe.** A category (adventure, silly, comfort, cozy) adds that category's prompt and its judge checks. No category means the base prompt alone. There is no default category.
+3. **No premise → ideas.** One extra call (`storyteller/options.py`, prompt `prompts/options.md`) asks for 5 distinct ideas of the category that keep whatever the request named, and code picks one at random (`OPTIONS_SEED` makes the pick repeatable per request). The pick fills only the empty fields, and only the writer sees it: the judge checks faithfulness to what the parent asked for, never to the invented idea. The trace logs the full list and the pick. Why: when the writer invented its own plot, repeated vague requests converged on one template; see `docs/findings/independent_thinking_experiement.md`.
 
 The gate and extraction are separate calls on purpose: a request that fails the gate stops before extraction is paid for. The gate returns two checks, `safety` and `relevance`, each with evidence written before `passed`; both must pass. The gate judges the *request*, not a story, and lets through requests that can be reshaped into something bedtime-appropriate.
 
@@ -63,7 +66,7 @@ The gate and extraction are separate calls on purpose: a request that fails the 
 
 ```mermaid
 flowchart TD
-    PROMPT["System prompt = base + category bundle + one line per variable given"]:::code
+    PROMPT["System prompt = base + category recipe (if any) + one line per variable"]:::code
     WRITE["Storyteller: first draft (round 0)"]:::llm
     JUDGE["Judge: fresh call, evidence then pass/fail then fix, per dimension"]:::llm
     LEN["Length check: 400-900 words"]:::code
@@ -91,7 +94,7 @@ flowchart TD
 
 ## Story variables
 
-Extraction fills `characters`, `setting`, `premise`, `worry` and `category`. There is no separate mood field: the category carries most of the tone (silly = funny, cozy = calm), and any tone it doesn't cover is written into the premise ("a gently spooky night for an owl"). `worry` is filled only when the request states a fear; comfort requires it.
+Extraction fills `characters`, `setting`, `premise`, `listener` and `category`. The **premise** is the content (what the story is about, in the request's words); the **category** is the recipe (how it is told). There is no separate mood or worry field: the category carries most of the tone (silly = funny, cozy = calm), any tone it doesn't cover is written into the premise ("a gently spooky night for an owl"), and a child's fear is the premise ("scared of the dark", category comfort). `listener` (who the story is for) is a line for the writer and is never treated as a character.
 
 ## Rubric
 
