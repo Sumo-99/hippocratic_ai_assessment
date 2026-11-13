@@ -1,4 +1,11 @@
-"""OpenRouter client (via the openai SDK) with retries, usage capture and a budget guard."""
+"""LLM clients with retries, usage capture and a budget guard.
+
+BaseLLMClient owns everything that does not depend on the provider (retry loop, validation,
+budget guard, usage callback). Each subclass makes exactly one HTTP call in `_call` and
+translates its SDK's errors into RetryableError (try again) or LLMError (give up).
+OpenRouterClient lives here; AnthropicClient lives in llm_anthropic.py. Only clients.py
+chooses between them.
+"""
 import asyncio
 import os
 import time
@@ -19,6 +26,10 @@ class LLMError(Exception):
 
 class BudgetExceeded(Exception):
     """The summed cost of this run passed config.MAX_RUN_COST_USD."""
+
+
+class RetryableError(Exception):
+    """A transient failure (connection, timeout, 429, 5xx) that the retry loop may try again."""
 
 
 class LLMClient(Protocol):
@@ -42,13 +53,10 @@ def _strict_schema(node: Any) -> Any:
     return node
 
 
-class OpenRouterClient:
-    def __init__(self, api_key: str | None = None, on_usage: Callable | None = None):
-        # .env was already loaded by config.py at import time.
-        key = api_key or os.getenv("OPENROUTER_API_KEY")
-        if not key:
-            raise RuntimeError("OPENROUTER_API_KEY not set")
-        self._client = AsyncOpenAI(base_url=config.BASE_URL, api_key=key)
+class BaseLLMClient:
+    """Provider-neutral half of a client. Subclasses implement `_call` only."""
+
+    def __init__(self, on_usage: Callable | None = None):
         self.on_usage = on_usage  # called as (stage, prompt_tokens, completion_tokens, cost, seconds)
         self.total_cost = 0.0     # summed over this client's lifetime = one run
 
@@ -56,37 +64,51 @@ class OpenRouterClient:
         return await self._with_retries(system, user, None, stage)
 
     async def structured(self, system: str, user: str, schema: type[T], *, stage: str) -> T:
-        response_format = {
-            "type": "json_schema",
-            "json_schema": {
-                "name": schema.__name__,
-                "strict": True,
-                "schema": _strict_schema(schema.model_json_schema()),
-            },
-        }
-        return await self._with_retries(system, user, response_format, stage, schema)
+        return await self._with_retries(system, user, schema, stage)
 
-    async def _with_retries(self, system, user, response_format, stage, schema=None):
+    async def _with_retries(self, system, user, schema, stage):
         last: Exception | None = None
         for attempt in range(config.RETRIES):
             try:
-                content = await self._raw_call(system, user, response_format, stage)
+                content = await self._call(system, user, schema, stage)
                 # Validation sits inside the retry loop: bad JSON is retried like an API error.
                 return content if schema is None else schema.model_validate_json(content)
-            except openai.APIStatusError as e:
-                # DECISION: 4xx (except 429) is our bug or a bad key; retrying just burns time.
-                if e.status_code < 500 and e.status_code != 429:
-                    raise LLMError(f"{stage}: HTTP {e.status_code}: {e}") from e
-                last = e
-            except (openai.APIError, ValidationError) as e:  # connection, timeout, 429, 5xx, bad JSON
+            except (RetryableError, ValidationError) as e:  # LLMError / BudgetExceeded propagate
                 last = e
             if attempt < config.RETRIES - 1:
                 await asyncio.sleep(2 ** attempt)
         raise LLMError(f"{stage}: failed after {config.RETRIES} attempts: {last}") from last
 
-    async def _raw_call(self, system, user, response_format, stage) -> str:
+    def _check_budget(self) -> None:
         if self.total_cost >= config.MAX_RUN_COST_USD:  # refuse to start a call once over budget
             raise BudgetExceeded(f"run cost ${self.total_cost:.4f} >= ${config.MAX_RUN_COST_USD}")
+
+    def _record_usage(self, stage: str, prompt_tokens: int, completion_tokens: int,
+                      cost: float, seconds: float) -> None:
+        self.total_cost += cost
+        if self.on_usage:
+            self.on_usage(stage, prompt_tokens, completion_tokens, cost, seconds)
+        if self.total_cost > config.MAX_RUN_COST_USD:
+            raise BudgetExceeded(f"run cost ${self.total_cost:.4f} > ${config.MAX_RUN_COST_USD}")
+
+    async def _call(self, system: str, user: str, schema: type[BaseModel] | None,
+                    stage: str) -> str:
+        """One HTTP call: _check_budget() first, _record_usage() after, return the raw text.
+        Raise RetryableError for transient failures and LLMError for fatal ones."""
+        raise NotImplementedError
+
+
+class OpenRouterClient(BaseLLMClient):
+    def __init__(self, api_key: str | None = None, on_usage: Callable | None = None):
+        # .env was already loaded by config.py at import time.
+        key = api_key or os.getenv("OPENROUTER_API_KEY")
+        if not key:
+            raise RuntimeError("OPENROUTER_API_KEY not set")
+        super().__init__(on_usage)
+        self._client = AsyncOpenAI(base_url=config.BASE_URL, api_key=key)
+
+    async def _call(self, system, user, schema, stage) -> str:
+        self._check_budget()
         messages = [{"role": "user", "content": user}]
         if system:  # baseline() sends no system prompt at all, like the original main.py
             messages.insert(0, {"role": "system", "content": system})
@@ -101,10 +123,25 @@ class OpenRouterClient:
                 "provider": {"require_parameters": True},  # only providers that honor json_schema
             },
         )
-        if response_format is not None:
-            kwargs["response_format"] = response_format
+        if schema is not None:
+            kwargs["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": schema.__name__,
+                    "strict": True,
+                    "schema": _strict_schema(schema.model_json_schema()),
+                },
+            }
         start = time.monotonic()
-        resp = await self._client.chat.completions.create(**kwargs)
+        try:
+            resp = await self._client.chat.completions.create(**kwargs)
+        except openai.APIStatusError as e:
+            # DECISION: 4xx (except 429) is our bug or a bad key; retrying just burns time.
+            if e.status_code < 500 and e.status_code != 429:
+                raise LLMError(f"{stage}: HTTP {e.status_code}: {e}") from e
+            raise RetryableError(e) from e
+        except openai.APIError as e:  # connection, timeout
+            raise RetryableError(e) from e
         seconds = time.monotonic() - start
 
         usage = resp.usage
@@ -116,9 +153,5 @@ class OpenRouterClient:
             # budget guard still works instead of silently reading every call as free.
             cost = (usage.prompt_tokens * config.PRICE_IN_PER_TOKEN
                     + usage.completion_tokens * config.PRICE_OUT_PER_TOKEN)
-        self.total_cost += cost
-        if self.on_usage:
-            self.on_usage(stage, usage.prompt_tokens, usage.completion_tokens, cost, seconds)
-        if self.total_cost > config.MAX_RUN_COST_USD:
-            raise BudgetExceeded(f"run cost ${self.total_cost:.4f} > ${config.MAX_RUN_COST_USD}")
+        self._record_usage(stage, usage.prompt_tokens, usage.completion_tokens, cost, seconds)
         return resp.choices[0].message.content or ""
