@@ -41,10 +41,11 @@ reviewer_verdict: n/a
   - Total about $0.005.
 
 ## Open issues / for the human reviewer
+- **Known gap, not fixed yet:** the anthropic SDK honours an `ANTHROPIC_BASE_URL` env var, and `AnthropicClient` doesn't override it. A stray shell variable could therefore redirect the key and prompts, which breaks the "endpoints are fixed" rule. Fix: add `config.ANTHROPIC_BASE_URL = "https://api.anthropic.com"`, pass `base_url=` explicitly, and test that the env var is ignored.
 - Not exercised live: the `revise` stage, because both stories passed in round 0. It is a plain text call on the same code path as `generate`, which did run live.
 - No cache-token accounting: we never enable prompt caching, so `input_tokens` + `output_tokens` is the full bill.
 
-## Files touched (uncommitted)
+## Files touched (committed in f980c0f..ae5bbb7, pushed for the user's review)
 - storyteller/llm.py, storyteller/llm_anthropic.py, storyteller/clients.py, storyteller/config.py, storyteller/pipeline.py
 - tests/test_llm_anthropic.py, tests/test_llm_contract.py, tests/test_clients.py, tests/test_pipeline.py (2 strings)
 - requirements.txt, .env.example, README.md, docs/OPEN_QUESTIONS.md
