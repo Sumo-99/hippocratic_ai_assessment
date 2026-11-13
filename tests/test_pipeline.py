@@ -291,15 +291,13 @@ async def test_vague_request_gets_a_logged_random_option_for_the_writer(monkeypa
     assert stages(llm) == ["gate", "extract", "options", "generate", "judge"]
     t = read_trace(result)
     assert len(t["options"]["list"]) == 5 and t["options"]["seed"] == 7
-    from storyteller.options import STEERS
-    assert t["options"]["steer"] in STEERS
+    assert "steer" not in t["options"]
     i = t["options"]["picked_index"]
     assert t["spec"]["idea"]["characters"] == f"c{i}"
     assert f"Premise: x{i}" in llm.calls[3][1]  # the writer's system prompt
     # same seed + same request -> same pick
     again = read_trace(await pipeline.run("tell me a story", options_fake()))
     assert again["options"]["picked_index"] == i
-    assert again["options"]["steer"] == t["options"]["steer"]
 
 
 async def test_judge_does_not_see_the_picked_option():

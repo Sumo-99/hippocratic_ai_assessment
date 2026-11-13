@@ -6,8 +6,8 @@ Tested as condition B in docs/findings/independent_thinking_experiement.md: with
 inventing its own idea, vague requests converged on one template; with a random pick from
 model-made options, 10 requests gave 10 distinct premises. But the 5-option lists themselves
 repeated across requests (Pip in 9 of 10 lists, a moonlit woodland animal as option 1 in all
-10), so each call also gets one theme drawn at random from STEERS: code controls the space,
-the model fills in the specifics."""
+10). EXPERIMENT (skeleton_no_steer_experiment): no human-written themes or premises; the
+model proposes all 5 options itself."""
 import random
 
 from . import prompts
@@ -23,20 +23,6 @@ STORY_TYPES = {
 }
 
 
-# One is drawn at random per vague request and given to the options call as its theme.
-# DECISION: places and times only, no characters, so the model still invents who the story is
-# about. Kept away from what the model already defaults to (moon, woodland, meadow, pond,
-# lantern, garden, lighthouse, cottage), which is the palette these are meant to push off.
-STEERS = (
-    "a city rooftop", "the seaside", "a kitchen", "deep winter", "a workshop",
-    "a train journey", "a bakery before dawn", "market day", "a rainy afternoon indoors",
-    "a desert at dusk", "a houseboat on a canal", "a mountain hut", "a library",
-    "a bus ride home", "a greenhouse", "a farm in spring", "a music room", "a post office",
-    "a small island", "an orchard at harvest", "a museum after closing time",
-    "a bicycle repair shop", "a school after everyone has gone home", "a fishing harbour",
-    "a pottery studio", "a bridge over a busy river", "a hot-air balloon", "laundry day",
-)
-
 
 def is_vague(spec: StorySpec) -> bool:
     """Nothing to build a story from: no characters, setting, premise or worry.
@@ -46,9 +32,9 @@ def is_vague(spec: StorySpec) -> bool:
     return not (spec.characters or spec.setting or spec.premise or spec.worry)
 
 
-async def get_options(llm, category: str | None, steer: str) -> list[StoryOption]:
+async def get_options(llm, category: str | None) -> list[StoryOption]:
     story_type = STORY_TYPES.get(category or "cozy", STORY_TYPES["cozy"])
-    system = prompts.load("options").substitute(story_type=story_type, steer=steer)
+    system = prompts.load("options").substitute(story_type=story_type)
     result = await llm.structured(system, "Please give the 5 options.", StoryOptions,
                                   stage="options")
     return result.options
@@ -56,13 +42,8 @@ async def get_options(llm, category: str | None, steer: str) -> list[StoryOption
 
 def _rng(seed: int | None, request: str, what: str) -> random.Random:
     """With a fixed seed (config.OPTIONS_SEED) each draw repeats per request; the request is
-    mixed in so different requests don't all draw the same, and `what` keeps the steer draw
-    and the option pick independent of each other."""
+    mixed in so different requests don't all draw the same."""
     return random.Random(f"{seed}:{request}:{what}") if seed is not None else random.Random()
-
-
-def pick_steer(seed: int | None, request: str) -> str:
-    return _rng(seed, request, "steer").choice(STEERS)
 
 
 def pick(options: list[StoryOption], seed: int | None, request: str) -> int:

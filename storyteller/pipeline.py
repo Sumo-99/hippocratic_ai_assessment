@@ -14,7 +14,7 @@ from .gate import check_request, gate_message
 from .generate import make_spec, revise_story, write_story
 from .judge import evaluate
 from .llm import BudgetExceeded, LLMClient, OpenRouterClient
-from .options import get_options, is_vague, pick, pick_steer
+from .options import get_options, is_vague, pick
 from .models import DraftVersion, PipelineResult, StorySpec
 from .trace import Trace
 
@@ -98,14 +98,12 @@ async def _run(request: str, llm, trace: Trace) -> PipelineResult:
     trace.set("extraction", e.model_dump())
     spec = make_spec(e)
 
-    # 3. A vague request (nothing named) gets 5 model-made story options around a random
-    #    theme; code picks one.
+    # 3. A vague request (nothing named) gets 5 model-made story options; code picks one.
     if is_vague(spec):
-        steer = pick_steer(config.OPTIONS_SEED, request)
         with trace.stage("options"):
-            options = await get_options(llm, spec.category, steer)
+            options = await get_options(llm, spec.category)
         i = pick(options, config.OPTIONS_SEED, request)
-        trace.set("options", {"steer": steer, "list": [o.model_dump() for o in options],
+        trace.set("options", {"list": [o.model_dump() for o in options],
                               "picked_index": i, "seed": config.OPTIONS_SEED})
         spec = spec.model_copy(update={"idea": options[i]})
 
