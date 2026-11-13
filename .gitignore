@@ -15,6 +15,7 @@ venv/
 runs/*
 !runs/samples/
 !runs/minified_changes_testing/
+!runs/ben10_example/
 
 # OS / editor
 .DS_Store
