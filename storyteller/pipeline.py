@@ -92,7 +92,8 @@ async def _run(request: str, llm, trace: Trace) -> PipelineResult:
         trace.set("final", {"status": "rejected"})
         return PipelineResult(status="rejected", story=None, message=rejection, trace_path=None)
 
-    # 2. Extraction -> the story's variables. Anything the request didn't give stays empty.
+    # 2. Extraction -> the story's variables (characters, premise, category, setting).
+    #    Anything the request didn't give stays empty.
     with trace.stage("extract"):
         e = await extract(llm, request)
     trace.set("extraction", e.model_dump())
