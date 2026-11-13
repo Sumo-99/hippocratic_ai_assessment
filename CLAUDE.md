@@ -13,6 +13,7 @@ Before any work in this repo, read this file. It explains the rules and the `sto
 - `skeleton`: the simplified first version (one draft, rubric judge, code-only regression guard).
 - `skeleton_extensive`: the full first build (3 drafts, brainstorm, LLM pairwise comparison).
 - `user_feedback_feature` (from `skeleton` at a084a1a, the three-rule flow): post-story feedback loop. Plan: `docs/plans/2026-11-13-user-feedback.md`; port notes: `store/18_feedback_port/`.
+- `anthropic_invocation` (from `skeleton` at 8ce1517): direct Anthropic API backend, chosen with `LLM_PROVIDER`. Plan: `docs/plans/2026-11-13-anthropic-invocation.md`; progress and resume point: `store/20_anthropic_invocation/CONTEXT.md`.
 
 ## Where things live
 - Spec: `docs/SPEC.md`. Plan: `docs/plans/2026-11-11-storyteller-skeleton.md`
@@ -46,6 +47,7 @@ Before any work in this repo, read this file. It explains the rules and the `sto
 | `store/17_feedback_live_smoke/` | Live smoke test of the feedback loop (author-approved) | (orchestrator) | — |
 | `store/18_feedback_port/` | Port of the feedback feature onto the three-rule skeleton (a084a1a) | (orchestrator) | — |
 | `store/19_feedback_review_fixes/` | Author review fixes: override rename, always-a-session, feedback framing, TODOs out | (orchestrator) | — |
+| `store/20_anthropic_invocation/` | Anthropic backend plan (`docs/plans/2026-11-13-anthropic-invocation.md`), Tasks 0–6 | sonnet (code), opus (review) | — |
 
 ## Status
 Status comes from the files that exist:
