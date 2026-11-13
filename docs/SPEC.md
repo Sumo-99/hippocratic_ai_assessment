@@ -6,6 +6,11 @@ brief, the override wins.
 
 ## Overrides (from the author, after the brief was written)
 
+> **On branch `anthropic_invocation` (the submission), overrides 1 and 2 are withdrawn.** It uses
+> the brief's own choice: the `anthropic` SDK, key `ANTHROPIC_API_KEY`, model `claude-haiku-5-5`,
+> structured output via `output_config.format`. Overrides 1 and 2 still describe the development
+> branch `skeleton`.
+
 1. **Model access goes through OpenRouter, not the `anthropic` SDK.** Use the
    official `openai` Python SDK (`AsyncOpenAI`) pointed at
    `https://openrouter.ai/api/v1`. The model is still Claude Haiku 5.5, with

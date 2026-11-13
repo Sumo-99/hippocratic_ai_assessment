@@ -17,7 +17,7 @@ flowchart LR
     classDef io fill:#f3f3f3,stroke:#666,color:#222
 ```
 
-Blue = an LLM call (every call uses the same model, Claude Haiku 5.5 via OpenRouter). Green = deterministic code. Grey = user-facing input/output or a file.
+Blue = an LLM call (every call uses the same model, Claude Haiku 5.5 via the Anthropic API). Green = deterministic code. Grey = user-facing input/output or a file.
 
 ## Diagram 1: end to end
 

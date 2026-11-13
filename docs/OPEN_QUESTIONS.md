@@ -62,10 +62,11 @@ After a story is delivered, the user can ask for changes, and each change is a t
 
 ## DECISION entries (in code)
 
-1. **`storyteller/llm.py:32` strict schema.** Chosen: post-process pydantic's JSON schema ourselves (`additionalProperties: false`, all fields required, drop `default`). Alternative: openai's `to_strict_json_schema` helper, which ties us to an SDK internal.
-2. **`storyteller/llm.py:77` retry policy.** Chosen: 4xx other than 429 fails immediately as `LLMError`. 429, 5xx, connection and validation errors retry, waiting `2**attempt` seconds. Alternative: retry everything.
-3. **`storyteller/llm.py:115` missing cost.** Chosen: if OpenRouter omits `usage.cost`, estimate it from token counts at the list price in `config.py`, so the budget guard can't silently read zero. In the 3 sample runs `usage.cost` was always present.
+1. **`storyteller/llm.py:33` strict schema.** Chosen: post-process pydantic's JSON schema ourselves (`additionalProperties: false`, all fields required, drop `default`). Alternative: an SDK helper, which ties us to an SDK internal.
+2. **`storyteller/llm.py:73` retry policy.** Chosen: 4xx other than 429 fails immediately as `LLMError` (this includes a schema the API rejects). 429, 5xx, connection and validation errors retry, waiting `2**attempt` seconds. Alternative: retry everything.
+3. **`storyteller/llm.py:52` client construction.** Chosen: `base_url` passed explicitly, so the SDK's `ANTHROPIC_BASE_URL` env var can't redirect the key; `max_retries=0`, so the SDK doesn't retry inside our own loop. Cost is computed from token counts at the list price in `config.py`, since the API returns no dollar cost.
 4. **`storyteller/config.py:10` fixed endpoint and model.** Chosen: `BASE_URL` and `MODEL` are not env-overridable, so a stray shell variable can't redirect the key or swap the model. Alternative: allow overrides with a prefix.
+4a. **`storyteller/llm.py:118` refusals.** Chosen: `stop_reason == "refusal"` raises `LLMError` at once, after recording usage. Alternative: retry, paying up to 3 times for a likely repeat.
 5. *(removed 2026-11-13: the comfort-without-worry rule went with the `worry` field.)*
 6. **`storyteller/judge.py:59` failures computed in code.** Chosen: failures come from each dimension's `passed` flag, never the judge's own summary, and skipped dimensions are dropped. Alternative: trust the judge's summary.
 7. **`storyteller/pipeline.py:41` guard puts safety first.** Chosen: compare `(fails safety?, number of hard failures)`. Alternative: count only, where a version failing only safety (1) would beat one failing two other hard checks (2).
@@ -76,13 +77,12 @@ After a story is delivered, the user can ask for changes, and each change is a t
 - **Judge checks are shown to the writer.** The category files include their `## Judge checks` section in the generation prompt too, so the writer sees what it will be judged on. Alternative: strip that section for generation.
 - **Other hard failures at the cap still show the story.** For example, a story still failing wind_down after 3 revisions is shown; only a safety failure is withheld.
 - **`--baseline` sends no system prompt**, exactly like the original `main.py`.
-- **One client per run**, made by `build_client()` (`storyteller/clients.py`), so the budget guard is per run. Only `clients.py` names a concrete client; a test enforces it.
+- **One client per run**, made by `build_client()` (`storyteller/clients.py`), so the budget guard is per run. Only `clients.py` constructs the client; a test enforces it, so a backend change touches `clients.py` and `llm.py` only.
 
-## Spec overrides
+## Model access
 
-- Model access goes through OpenRouter by default (`https://openrouter.ai/api/v1`, model `anthropic/claude-haiku-5.5`) with the `openai` SDK. The key is `OPENROUTER_API_KEY`.
-- `LLM_PROVIDER=anthropic` switches to the Anthropic API directly (`anthropic` SDK, model `claude-haiku-5-5`, key `ANTHROPIC_API_KEY`). Structured output there uses `output_config.format` (JSON schema); thinking is disabled; cost is computed from token counts at the list price in `config.py`, since the API returns no dollar cost; refusals fail at once without a retry. Shared behaviour (retries, budget guard, usage callback) lives in `BaseLLMClient` and is pinned by `tests/test_llm_contract.py`.
-- No `temperature` is sent; the model doesn't support it. Structured output uses OpenRouter's JSON-schema mode with `provider.require_parameters: true`, validated with pydantic. Hidden reasoning is turned off.
+- The brief is followed as written: the `anthropic` SDK, the Anthropic API (`https://api.anthropic.com`), model `claude-haiku-5-5`, key `ANTHROPIC_API_KEY`. (The development branch `skeleton` went through OpenRouter instead; this branch is the Anthropic-only submission.)
+- No `temperature` is sent; current models reject it. Structured output uses the API's JSON-schema mode (`output_config.format`), validated with pydantic. Thinking is disabled.
 
 ## Deferred: what I'd build next (candidates, let evals decide)
 

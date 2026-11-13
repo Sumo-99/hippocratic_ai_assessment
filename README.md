@@ -58,10 +58,10 @@ Requires Python 3.12.
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env        # then put your OpenRouter key in OPENROUTER_API_KEY
+cp .env.example .env        # then put your Anthropic API key in ANTHROPIC_API_KEY
 ```
 
-Backend: by default every call goes through OpenRouter. To call the Anthropic API directly, set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY` in `.env` (or the shell). Both backends use Claude Haiku 5.5 and behave the same: retries, budget guard, traces.
+Every call goes to the Anthropic API with Claude Haiku 5.5 (`claude-haiku-5-5`). The key is the only setup needed.
 
 Run it:
 
