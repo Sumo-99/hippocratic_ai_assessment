@@ -113,6 +113,10 @@ def test_system_prompt_with_no_variables_has_no_trailing_lines():
     assert build_system_prompt(spec()) == "BASE 600\n\nCOZY"
 
 
+def test_system_prompt_includes_listener():
+    assert build_system_prompt(spec(listener="daughter")).endswith("Listener: daughter")
+
+
 def test_system_prompt_without_category_has_no_bundle():
     p = build_system_prompt(spec(category=None, premise="a kite"))
     assert p == "BASE 600\n\nPremise: a kite"

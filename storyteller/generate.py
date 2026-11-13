@@ -27,7 +27,7 @@ def build_system_prompt(spec: StorySpec) -> str:
     if spec.characters:
         lines.append("Characters: " + describe_characters(spec.characters))
     for label, value in (("Setting", spec.setting), ("Premise", spec.premise),
-                         ("Worry", spec.worry)):
+                         ("Worry", spec.worry), ("Listener", spec.listener)):
         if value:
             lines.append(f"{label}: {value}")
     if lines:

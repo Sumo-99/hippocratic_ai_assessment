@@ -68,6 +68,14 @@ def test_judge_and_writer_require_roles_to_stay():
     assert "must stay that role" in load("base").template
 
 
+def test_base_asks_for_setting_detail_fresh_names_and_listener_fit():
+    text = load("base").template
+    assert "weave concrete details of that place" in text
+    assert "Avoid overused storybook names such as Pip" in text
+    assert "Listener says who the story is for" in text
+    assert "never swap it for a different subject" in text
+
+
 def test_judge_names_every_dimension():
     text = load("judge").template
     for field in ["safety", "wind_down", "faithfulness_named", "consistency", "age_language",
