@@ -264,3 +264,53 @@ async def test_verbose_details_print_from_trace(capsys):
     out = capsys.readouterr().out
     assert "category: adventure" in out and "revisions: 1" in out and "final: PASS" in out
     assert "total cost: $0.0000" in out and result.trace_path in out
+
+
+# ---- story options for vague requests -----------------------------------------------------
+
+def vague_extraction(*_):
+    return Extraction(characters=[], setting=None, premise=None, worry=None, listener=None,
+                      category=None)
+
+
+def five_options(*_):
+    from storyteller.models import StoryOption, StoryOptions
+    return StoryOptions(options=[StoryOption(characters=f"c{i}", setting=f"s{i}",
+                                             situation=f"x{i}") for i in range(5)])
+
+
+def options_fake():
+    return FakeLLM({"gate": [gate_ok], "extract": [vague_extraction], "options": [five_options],
+                    "generate": [generate] * MANY, "judge": [judge_from(lambda t: set())] * MANY})
+
+
+async def test_vague_request_gets_a_logged_random_option_for_the_writer(monkeypatch):
+    monkeypatch.setattr(config, "OPTIONS_SEED", 7)
+    llm = options_fake()
+    result = await pipeline.run("tell me a story", llm)
+    assert stages(llm) == ["gate", "extract", "options", "generate", "judge"]
+    t = read_trace(result)
+    assert len(t["options"]["list"]) == 5 and t["options"]["seed"] == 7
+    from storyteller.options import STEERS
+    assert t["options"]["steer"] in STEERS
+    i = t["options"]["picked_index"]
+    assert t["spec"]["idea"]["characters"] == f"c{i}"
+    assert f"Premise: x{i}" in llm.calls[3][1]  # the writer's system prompt
+    # same seed + same request -> same pick
+    again = read_trace(await pipeline.run("tell me a story", options_fake()))
+    assert again["options"]["picked_index"] == i
+    assert again["options"]["steer"] == t["options"]["steer"]
+
+
+async def test_judge_does_not_see_the_picked_option():
+    llm = options_fake()
+    await pipeline.run("tell me a story", llm)
+    _, system, user = next(c for c in llm.calls if c[0] == "judge")
+    for i in range(5):
+        assert f"c{i}" not in system + user and f"x{i}" not in system + user
+
+
+async def test_no_options_call_when_the_request_names_something():
+    llm = fake(judge_from(lambda t: set()))
+    await pipeline.run("Alice and her cat Bob fly to the moon", llm)
+    assert "options" not in stages(llm)

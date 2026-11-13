@@ -133,3 +133,47 @@ async def test_write_and_revise():
     assert stage == "revise" and system.startswith(build_system_prompt(sp))
     assert system.endswith("REVISE") and "Worry: thunder" in system
     assert "story" in user and "shorter" in user
+
+
+# ---- story options for vague requests -----------------------------------------------------
+
+def test_picked_option_becomes_characters_setting_premise():
+    from storyteller.models import StoryOption
+    idea = StoryOption(characters="a badger and a heron", setting="a reed bed",
+                       situation="mending a nest")
+    p = build_system_prompt(spec(idea=idea, listener="son"))
+    assert p == ("BASE 600\n\nCOZY\n\nCharacters: a badger and a heron\nSetting: a reed bed\n"
+                 "Premise: mending a nest\nListener: son")
+
+
+def test_is_vague_only_when_nothing_is_named():
+    from storyteller.options import is_vague
+    assert is_vague(spec()) and is_vague(spec(listener="son"))  # listener isn't content
+    for named in (dict(premise="a kite"), dict(setting="a barn"), dict(worry="the dark"),
+                  dict(characters=[Character(name="Bo", role=None)])):
+        assert not is_vague(spec(**named))
+
+
+async def test_options_prompt_asks_for_the_requests_category(monkeypatch):
+    from storyteller.models import StoryOption, StoryOptions
+    from storyteller.options import get_options
+    monkeypatch.setattr(prompts, "load", lambda name: Template("OPTIONS $story_type | $steer"))
+    opts = StoryOptions(options=[StoryOption(characters="c", setting="s", situation="x")] * 5)
+    llm = FakeLLM({"options": [opts, opts]})
+    await get_options(llm, "silly", "a kitchen")
+    await get_options(llm, None, "the seaside")
+    assert llm.calls[0][1] == "OPTIONS a silly, funny bedtime story | a kitchen"
+    assert llm.calls[1][1] == "OPTIONS a calm, cozy bedtime story | the seaside"
+
+
+def test_steers_avoid_the_default_palette_and_draws_repeat_with_a_seed():
+    from storyteller.options import STEERS, pick_steer
+    assert 20 <= len(STEERS) <= 30 and len(set(STEERS)) == len(STEERS)
+    for s in STEERS:
+        for word in ("moon", "wood", "forest", "meadow", "pond", "lantern", "garden",
+                     "lighthouse", "cottage", "pip"):
+            assert word not in s.lower(), f"steer {s!r} is on the default palette ({word})"
+    assert pick_steer(7, "tell me a story") == pick_steer(7, "tell me a story")
+    assert pick_steer(7, "tell me a story") in STEERS
+    requests = [f"request {i}" for i in range(40)]
+    assert len({pick_steer(7, r) for r in requests}) > 10  # different requests, spread out

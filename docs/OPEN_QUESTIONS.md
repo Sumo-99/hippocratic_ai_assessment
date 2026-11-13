@@ -6,7 +6,7 @@ Every `# DECISION:` marker in the code, the spec overrides, the simplification c
 
 The first build implemented the full brief: three drafts for vague requests, a premise brainstorm, LLM pairwise comparison in both orders, cross-draft selection and a cozy fallback draft. That build is preserved on branch `skeleton_extensive`. The author chose to start smaller and let evals decide where complexity is worth adding back. What changed:
 
-- **One draft per request.** No depth/breadth branch and no brainstorm. For a vague request the category prompt (cozy by default) lets the model invent the premise itself; `prompts/base.md` says so explicitly.
+- **One draft per request.** No depth/breadth branch and no brainstorm. For a vague request, one small call asks for 5 story ideas and code picks one at random (added 2026-11-13, see "Story options for vague requests" below).
 - **The gate and extraction stay two separate calls.** A request that fails the gate stops before extraction is paid for.
 - **No LLM comparison anywhere.** Keep-better is a code-only regression guard (see `pipeline.keep_better`):
   - Only hard failures count. Soft failures play no part.
@@ -16,6 +16,14 @@ The first build implemented the full brief: three drafts for vague requests, a p
 - **No fallback draft.** If the final version fails safety, the canned message is shown instead.
 - **No `mood` field.** The category carries the tone (silly = funny, cozy = calm, adventure = exciting). Any tone it doesn't cover goes into the premise in a few words, never as invented events. The rubric item became `faithfulness_premise`. `worry` stays: it is filled only when the request states a fear, and comfort requires it (checked in code by `normalize`).
 - **The gate returns two checks.** `safety` and `relevance`, each `Check {evidence, passed}`, in one call. Both must pass. The rejection message uses the failed check's evidence (safety first if both fail). `Check` is separate from the judge's `Verdict` because a request has no "fix".
+
+## Story options for vague requests (2026-11-13)
+
+Tested as condition B in `docs/findings/independent_thinking_experiement.md` (10 vague requests, one run each): letting the writer invent its own idea converged on one template, while a random pick from 5 model-made options gave 10 distinct premises. Changes from the tested version:
+- **Any vague request, not only cozy.** The options prompt asks for the spec's category ("a silly, funny bedtime story", ...); the tested prompt always said "calm".
+- **A worry counts as named** (`options.is_vague`, DECISION). "my son is scared of the dark" still goes straight to the writer, so the story stays about the fear.
+
+- **A random theme steers the options call.** The experiment's option lists repeated across requests (Pip in 9 of 10 lists, a moonlit woodland animal as option 1 in all 10). Code now draws one of 28 curated places/times (`options.STEERS`) and the prompt asks for all 5 options around it. Code controls the space, as the old seed list did; the model fills in characters and specifics, as in condition B. The steers are places and times only (DECISION), and avoid the default palette (moon, woodland, meadow, pond, lantern, garden, lighthouse, cottage); a test checks this. "deep winter" is kept, although snow was common in the experiment's lists. Not yet run live.
 
 ## DECISION entries (in code)
 
@@ -67,6 +75,6 @@ Each of these is implemented on `skeleton_extensive` unless marked otherwise.
    - Where to tune: `storyteller/prompts/judge.md`, the category `## Judge checks` sections, and `storyteller/judge.py`.
 2. **Extraction of family references: fixed and confirmed live (2026-11-12).** "my son is scared of the dark" now extracts `characters: []`, `worry: "scared of the dark"`, `category: comfort`.
 3. **Sample traces re-run with the simplified version (2026-11-12).** `runs/samples/` now holds the three requests run through this version: $0.006 in total, 12–22 s each, 4–6 calls each. The extensive build's samples are on `skeleton_extensive`.
-4. **Vague requests now rely on the writer inventing a premise.** Check that "tell me a story" gets a varied, engaging cozy story without the brainstorm.
+4. **Vague requests now get a random pick from 5 model-made options.** Check variety over repeat runs of the same request, whether the theme steer stops the option lists repeating across requests (names such as Pip come from the options call, which has no name guidance), and that non-cozy vague requests ("a silly story") get ideas of that category.
 5. **Tone without a mood field.** Check that requests like "a slightly spooky owl story" or "an exciting space story" keep their tone through the premise and category.
 6. **The writer undershoots the length target.** First drafts were 435, 375 and 476 words against a 600-word target (400–900 accepted). One draft failed the length check and was fixed by a revision. Consider raising the target in `base.md`, or watch whether this costs revision rounds.

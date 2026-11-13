@@ -1,6 +1,6 @@
 """The whole story flow:
 
-    gate -> extract -> spec -> write -> [judge -> feedback -> revise -> judge -> keep better]
+    gate -> extract -> spec -> [options, if vague] -> write -> [judge -> feedback -> revise -> judge -> keep better]
     x up to MAX_ROUNDS -> final safety check -> story (or a friendly message)
 
 `run(request)` is the one public entry; the CLI and a future eval script both use it.
@@ -14,6 +14,7 @@ from .gate import check_request, gate_message
 from .generate import make_spec, revise_story, write_story
 from .judge import evaluate
 from .llm import BudgetExceeded, LLMClient, OpenRouterClient
+from .options import get_options, is_vague, pick, pick_steer
 from .models import DraftVersion, PipelineResult, StorySpec
 from .trace import Trace
 
@@ -97,13 +98,24 @@ async def _run(request: str, llm, trace: Trace) -> PipelineResult:
     trace.set("extraction", e.model_dump())
     spec = make_spec(e)
 
-    # 3. Write, judge and revise.
+    # 3. A vague request (nothing named) gets 5 model-made story options around a random
+    #    theme; code picks one.
+    if is_vague(spec):
+        steer = pick_steer(config.OPTIONS_SEED, request)
+        with trace.stage("options"):
+            options = await get_options(llm, spec.category, steer)
+        i = pick(options, config.OPTIONS_SEED, request)
+        trace.set("options", {"steer": steer, "list": [o.model_dump() for o in options],
+                              "picked_index": i, "seed": config.OPTIONS_SEED})
+        spec = spec.model_copy(update={"idea": options[i]})
+
+    # 4. Write, judge and revise.
     final = await write_and_revise(llm, spec, trace, request)
     ev = final.evaluation
     summary = {"round": final.round, "all_passed": ev.all_passed,
                "hard_failures": ev.hard_failures, "soft_failures": ev.soft_failures}
 
-    # 4. Final safety check: a story that fails safety is never shown.
+    # 5. Final safety check: a story that fails safety is never shown.
     if "safety" in ev.hard_failures:
         # TODO(safety-fallback): a later version could retry with a fresh cozy draft first.
         trace.set("final", {"status": "safety_message", **summary})

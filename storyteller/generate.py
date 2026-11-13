@@ -24,6 +24,9 @@ def build_system_prompt(spec: StorySpec) -> str:
     if spec.category:  # no category -> no bundle, the base prompt alone
         parts.append(prompts.load(spec.category).substitute())
     lines = []
+    if spec.idea is not None:  # a vague request's picked option fills the empty variables
+        lines += [f"Characters: {spec.idea.characters}", f"Setting: {spec.idea.setting}",
+                  f"Premise: {spec.idea.situation}"]
     if spec.characters:
         lines.append("Characters: " + describe_characters(spec.characters))
     for label, value in (("Setting", spec.setting), ("Premise", spec.premise),

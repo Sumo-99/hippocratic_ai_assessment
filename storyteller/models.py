@@ -77,6 +77,17 @@ class JudgeResult(BaseModel):
     category_checks: Verdict
 
 
+class StoryOption(BaseModel):
+    """One model-made story idea for a vague request (storyteller/options.py)."""
+    characters: str
+    setting: str
+    situation: str
+
+
+class StoryOptions(BaseModel):
+    options: list[StoryOption]
+
+
 # ---- types only our code uses ------------------------------------------------------------
 
 class StorySpec(BaseModel):
@@ -88,6 +99,10 @@ class StorySpec(BaseModel):
     premise: str | None
     worry: str | None
     listener: str | None = None
+    # The option picked for a vague request. Only the writer sees it: the judge still treats
+    # the request as naming nothing, so it never checks faithfulness to an idea the parent
+    # didn't ask for.
+    idea: StoryOption | None = None
 
 
 class Evaluation(BaseModel):

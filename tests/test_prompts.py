@@ -12,6 +12,7 @@ KEYS = {
     "judge": {"rubric_context": "Named characters: Milo", "category_checks": "- a check"},
     "revise": {},
     "baseline": {},
+    "options": {"story_type": "a calm, cozy bedtime story", "steer": "a kitchen"},
     **{c: {} for c in CATEGORIES},
 }
 
