@@ -20,7 +20,8 @@ from .feedback import build_feedback
 from .gate import check_request, gate_message
 from .generate import revise_story, write_story
 from .judge import evaluate
-from .llm import BudgetExceeded, LLMClient, OpenRouterClient
+from .clients import build_client
+from .llm import BudgetExceeded, LLMClient
 from .options import get_options, pick
 from .models import DraftVersion, Evaluation, PipelineResult, StorySession, StorySpec
 from .overrides import apply_overrides
@@ -239,7 +240,7 @@ async def _turn(session: StorySession, llm: LLMClient | None,
         if llm is None:
             # One fresh client per turn: its total_cost (the budget guard) is per instance.
             # Created inside `try` so a missing key still writes a trace.
-            llm = OpenRouterClient(on_usage=trace.on_usage)
+            llm = build_client(on_usage=trace.on_usage)
         result = await _run(session, llm, trace, feedback)
     except BudgetExceeded as exc:
         # DECISION: running out of budget is expected behaviour, not a crash: tell the user
@@ -275,5 +276,5 @@ async def give_feedback(session: StorySession, feedback: str,
 
 async def baseline(request: str, llm: LLMClient | None = None) -> str:
     """The original main.py behaviour, for comparison: one call, just the request."""
-    llm = llm or OpenRouterClient()
+    llm = llm or build_client()
     return await llm.text("", request, stage="baseline")
