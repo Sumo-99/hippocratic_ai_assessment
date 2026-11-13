@@ -326,7 +326,7 @@ async def test_named_characters_without_a_premise_still_get_ideas():
     assert "Characters: Alice" in writer and not any(f"c{i}" in writer for i in range(5))
 
 
-async def test_no_category_means_no_recipe_even_for_an_empty_request():
+async def test_no_category_means_no_category_prompt_even_for_an_empty_request():
     llm = options_fake()
     await pipeline.run("tell me a story", llm)
     writer = next(c for c in llm.calls if c[0] == "generate")[1]

@@ -4,7 +4,7 @@ from .models import StorySpec, describe_characters
 
 
 def build_system_prompt(spec: StorySpec) -> str:
-    """Base prompt + the category's recipe (if any) + one line per variable that is present.
+    """Base prompt + the category prompt (if any) + one line per variable that is present.
 
     The picked idea (if any) fills only what the request left empty; what the parent named
     always wins."""

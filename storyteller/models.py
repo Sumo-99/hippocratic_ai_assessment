@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-# The story recipe: which category prompt the writer gets and which checks the judge adds.
+# The story type: which category prompt the writer gets and which checks the judge adds.
 Category = Literal["adventure", "silly", "comfort", "cozy"]
 
 
@@ -47,7 +47,7 @@ class Extraction(BaseModel):
     setting: str | None
     premise: str | None  # what the story is about, in the request's words (a worry goes here)
     listener: str | None  # who the story is for ("daughter", "6 year old"); not a character
-    category: Category | None  # None = no recipe: the writer gets the base prompt alone
+    category: Category | None  # None = no category: the writer gets the base prompt alone
 
 
 class Verdict(BaseModel):

@@ -28,9 +28,9 @@ Tested as condition B in `docs/findings/independent_thinking_experiement.md` (10
 
 Simplified so each rule lives in one place and the system can be stated in three rules (see `ARCHITECTURE.md`):
 - **`worry` removed.** A child's fear is the premise ("scared of the dark") with category comfort. `normalize`'s "comfort needs a worry" rule is gone; the extract prompt already says "no worry, no comfort".
-- **`gentle_lesson` removed.** Categories are adventure, silly, comfort, cozy. Moral-choice requests ("a story about sharing") now get the premise and no recipe.
+- **`gentle_lesson` removed.** Categories are adventure, silly, comfort, cozy. Moral-choice requests ("a story about sharing") now get the premise and no category.
 - **No cozy fallback.** `FALLBACK_CATEGORY` and `make_spec` are gone: no category means the base prompt alone, even for "tell me a story" (the 5 ideas give it a plot). Untested live; the base prompt's bedtime shape and the judge's `wind_down` check keep endings calm.
-- **One check per condition.** "Is there a premise?" is checked only in `pipeline._run`; "is there a category?" only where a recipe is loaded (writer prompt, judge skip). `StorySpec` is the extraction plus the picked idea.
+- **One check per condition.** "Is there a premise?" is checked only in `pipeline._run`; "is there a category?" only where a category prompt is loaded (writer prompt, judge skip). `StorySpec` is the extraction plus the picked idea.
 
 ## DECISION entries (in code)
 

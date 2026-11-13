@@ -57,7 +57,7 @@ flowchart TD
 Three rules decide what the writer gets:
 
 1. **Extract** characters, setting, premise and category. Anything not in the request stays empty; nothing is guessed.
-2. **Category → recipe.** A category (adventure, silly, comfort, cozy) adds that category's prompt and its judge checks. No category means the base prompt alone. There is no default category.
+2. **Category → category prompt.** A category (adventure, silly, comfort, cozy) adds that category's prompt and its judge checks. No category means the base prompt alone. There is no default category.
 3. **No premise → ideas.** One extra call (`storyteller/options.py`, prompt `prompts/options.md`) asks for 5 distinct ideas of the category that keep whatever the request named, and code picks one at random (`OPTIONS_SEED` makes the pick repeatable per request). The pick fills only the empty fields, and only the writer sees it: the judge checks faithfulness to what the parent asked for, never to the invented idea. The trace logs the full list and the pick. Why: when the writer invented its own plot, repeated vague requests converged on one template; see `docs/findings/independent_thinking_experiement.md`.
 
 The gate and extraction are separate calls on purpose: a request that fails the gate stops before extraction is paid for. The gate returns two checks, `safety` and `relevance`, each with evidence written before `passed`; both must pass. The gate judges the *request*, not a story, and lets through requests that can be reshaped into something bedtime-appropriate.
@@ -66,7 +66,7 @@ The gate and extraction are separate calls on purpose: a request that fails the 
 
 ```mermaid
 flowchart TD
-    PROMPT["System prompt = base + category recipe (if any) + one line per variable"]:::code
+    PROMPT["System prompt = base + category prompt (if any) + one line per variable"]:::code
     WRITE["Storyteller: first draft (round 0)"]:::llm
     JUDGE["Judge: fresh call, evidence then pass/fail then fix, per dimension"]:::llm
     LEN["Length check: 400-900 words"]:::code
@@ -94,7 +94,7 @@ flowchart TD
 
 ## Story variables
 
-Extraction fills `characters`, `setting`, `premise`, `listener` and `category`. The **premise** is the content (what the story is about, in the request's words); the **category** is the recipe (how it is told). There is no separate mood or worry field: the category carries most of the tone (silly = funny, cozy = calm), any tone it doesn't cover is written into the premise ("a gently spooky night for an owl"), and a child's fear is the premise ("scared of the dark", category comfort). `listener` (who the story is for) is a line for the writer and is never treated as a character.
+Extraction fills `characters`, `setting`, `premise`, `listener` and `category`. The **premise** is the content (what the story is about, in the request's words); the **category** is the story type (how it is told). There is no separate mood or worry field: the category carries most of the tone (silly = funny, cozy = calm), any tone it doesn't cover is written into the premise ("a gently spooky night for an owl"), and a child's fear is the premise ("scared of the dark", category comfort). `listener` (who the story is for) is a line for the writer and is never treated as a character.
 
 ## Rubric
 
