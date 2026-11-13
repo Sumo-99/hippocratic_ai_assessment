@@ -3,7 +3,7 @@ import pytest
 
 from storyteller.prompts import load
 
-CATEGORIES = ["adventure", "silly", "comfort", "gentle_lesson", "cozy"]
+CATEGORIES = ["adventure", "silly", "comfort", "cozy"]
 
 KEYS = {
     "base": {"target_words": "600"},
@@ -12,7 +12,7 @@ KEYS = {
     "judge": {"rubric_context": "Named characters: Milo", "category_checks": "- a check"},
     "revise": {},
     "baseline": {},
-    "options": {"story_type": "a calm, cozy bedtime story"},
+    "options": {"story_type": "a calm, cozy bedtime story", "keep": ""},
     **{c: {} for c in CATEGORIES},
 }
 

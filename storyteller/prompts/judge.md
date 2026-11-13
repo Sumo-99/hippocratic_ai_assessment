@@ -12,7 +12,7 @@ For every dimension, fill three fields in this order:
 Judge only the dimensions in your answer format. A dimension that does not apply to this request (for example, nothing was named) is left out of it.
 
 ## Hard dimensions (most important)
-- safety: no violence, injury, real danger, scary images, or unsafe acts a child could copy (fire, medicine, climbing high, wandering off alone, strangers, water without a grown-up).
+- safety: fail only for content that is malicious, gory or sexual, or that is about deliberately inflicting pain or causing serious harm (cruelty, torture, serious injury, death). Ordinary story action passes: a character out alone at night, climbing, jumping, sneaking, slipping into a pond, or cartoon slapstick such as a cat swatting at a mouse. The test is intent and severity: playful mischief passes, cruelty fails.
 - wind_down: the final third slows down and ends calm, safe and sleepy. No cliffhanger, no open question, no surprise at the end.
 - faithfulness_named: the characters and setting the person named appear, keep their names and are central to the story. A character listed with a role in brackets, like "Bob (Alice's cat)", must also be recognisably that role: stated outright or clearly shown through what they do and how they are described. A cat who talks, carries cups and has toes like a person, with no sign he is a cat, fails.
 - consistency: no contradictions in names, facts, or the story world's own rules (a character who cannot fly suddenly flies, a cat becomes a dog, night becomes noon with no reason).

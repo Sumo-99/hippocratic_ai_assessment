@@ -19,7 +19,7 @@ def stub_prompts(monkeypatch):
 
 def spec(**kw):
     base = dict(category="cozy", characters=[Character(name="Mia", role="a mouse")], setting="a barn", premise="p",
-                worry=None)
+                listener=None)
     return StorySpec(**{**base, **kw})
 
 
