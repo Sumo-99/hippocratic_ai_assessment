@@ -33,3 +33,6 @@ RUNS_DIR = os.getenv("RUNS_DIR", "runs")
 HARD = ["safety", "wind_down", "faithfulness_named", "consistency"]
 SOFT = ["age_language", "story_arc", "engagement", "faithfulness_premise",
         "category_checks", "length"]
+# Dimensions a user's own ask may override for their story (storyteller/overrides.py). Safety is
+# never overridable; models.OverridableCheck mirrors this list so a model cannot even name safety.
+OVERRIDABLE_CHECKS = [d for d in HARD + SOFT if d != "safety"]
