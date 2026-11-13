@@ -21,3 +21,6 @@ runs/*
 .DS_Store
 .idea/
 .vscode/
+
+# Docs are kept local on this branch only (anthropic_invocation)
+docs/
