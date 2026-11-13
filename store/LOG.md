@@ -45,3 +45,5 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-13 | 18_feedback_port | live-call | 3-turn smoke on new base, 14 calls, $0.0081: cliffhanger delivered (round 1, keep-wishes line held against a conflicting category_checks fix); rule 3 not exercised (premise extracted)
 2026-11-13 | 18_feedback_port | live-call | no-premise smoke (Alice and her cat Bob -> cliffhanger), 9 calls, $0.0040: rule 3 fired, idea carried over, no re-pick, cliffhanger in round 0
 2026-11-13 | 19_feedback_review_fixes | handoff | waive->override (OverridableCheck), always-a-session (is_feedback), feedback framing, TODOs out of .py; 179 passed
+2026-11-13 | 19_feedback_review_fixes | cli | exit/Esc to quit (blank Enter re-asks), story scroll, moon spinner; 196 passed
+2026-11-13 | 19_feedback_review_fixes | cli | all UI moved to root ui.py (main.py = flow); banner, captions, unfolding scroll, night-sky loading scene, markdown strip; 210 passed
