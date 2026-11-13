@@ -5,10 +5,23 @@ Before submitting the assignment, describe here in a few sentences what you woul
 import argparse
 import asyncio
 import json
+import re
 
 from storyteller import config, pipeline
+from storyteller.llm import LLMError
 
 example_requests = "A story about a girl named Alice and her best friend Bob, who happens to be a cat."
+
+FEEDBACK_PROMPT = "\nAnything to change? Tell me, or press Enter to finish: "
+QUIT_WORDS = {"", "q", "quit", "exit", "done", "stop", "no", "nope", "no thanks", "nothing",
+              "thats all"}
+FEEDBACK_ERROR = "Sorry, something went wrong making that change. Please try again."
+
+
+def is_quit(answer: str) -> bool:
+    """Blank, a quit word, or a plain "no" (any case, punctuation ignored): each would otherwise
+    run a paid revision of a story the user is happy with."""
+    return re.sub(r"[^\w\s]", "", answer.lower()).strip() in QUIT_WORDS
 
 
 def parse_args(argv=None):
@@ -27,6 +40,8 @@ def print_details(trace_path: str) -> None:
     with open(trace_path) as f:
         t = json.load(f)
     print("\n--- details ---")
+    if t.get("turn"):
+        print(f"feedback turn {t['turn']}: {t['feedback'][-1]!r}")
     if "spec" in t:
         print(f"category: {t['spec']['category']}")
     if "versions" in t:
@@ -57,10 +72,37 @@ def main(argv=None):
         return
 
     result = asyncio.run(pipeline.run(request))
+    show(result, args.verbose)
+
+    # The feedback loop: there is always a session, and feedback is offered while it holds a
+    # delivered story. Each answer is one more turn; a rejected or failed turn returns the
+    # last good session unchanged.
+    session = result.session
+    try:
+        while session.story is not None:
+            try:
+                answer = input(FEEDBACK_PROMPT).strip()
+            except EOFError:  # Ctrl-D ends the conversation like a blank answer
+                break
+            if is_quit(answer):
+                break
+            try:
+                result = asyncio.run(pipeline.give_feedback(session, answer))
+            except LLMError:
+                # DECISION: an upstream failure on one change keeps the conversation and the
+                # last good story; the turn's trace is already written by the pipeline.
+                print(FEEDBACK_ERROR)
+                continue
+            show(result, args.verbose)
+            session = result.session
+    except KeyboardInterrupt:  # Ctrl-C ends the conversation quietly
+        print()
+
+
+def show(result, verbose: bool) -> None:
     print(result.story if result.story is not None else result.message)
-    if args.verbose and result.trace_path:
+    if verbose and result.trace_path:
         print_details(result.trace_path)
-    # TODO(user-feedback): ask the listener what they thought and offer a revised story.
 
 
 if __name__ == "__main__":
