@@ -54,3 +54,4 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-13 | 20_anthropic_invocation | push | code committed (f980c0f..ae5bbb7) and pushed for the user's review; open: ANTHROPIC_BASE_URL gap
 2026-11-13 | 20_anthropic_invocation | simplify | Anthropic-only at the author's request; OpenRouter + LLM_PROVIDER + openai removed; base-URL gap fixed; 220 passed; live run PASS $0.0018
 2026-11-13 | 20_anthropic_invocation | squash | adea93d+d7ac405 squashed into b44b54d (force-pushed, author-approved); every commit after 23b3a2d passes 220; local backup branch backup/anthropic_invocation-pre-squash
+2026-11-13 | 20_anthropic_invocation | simplify | removed storyteller/clients.py (build_client) and tests/test_clients.py; pipeline constructs AnthropicClient directly; 218 passed; code uncommitted pending review

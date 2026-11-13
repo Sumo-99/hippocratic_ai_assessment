@@ -1,5 +1,5 @@
 """Anthropic Messages API client (via the anthropic SDK) with retries, usage capture and a
-budget guard. Only clients.build_client() constructs it; everything else sees LLMClient."""
+budget guard. pipeline.py makes one per turn; everything else sees LLMClient."""
 import asyncio
 import os
 import time

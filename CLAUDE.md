@@ -13,7 +13,7 @@ Before any work in this repo, read this file. It explains the rules and the `sto
 - `skeleton`: the simplified first version (one draft, rubric judge, code-only regression guard).
 - `skeleton_extensive`: the full first build (3 drafts, brainstorm, LLM pairwise comparison).
 - `user_feedback_feature` (from `skeleton` at a084a1a, the three-rule flow): post-story feedback loop. Plan: `docs/plans/2026-11-13-user-feedback.md`; port notes: `store/18_feedback_port/`.
-- `anthropic_invocation` (from `skeleton` at 8ce1517): **the submission**, Anthropic-only (`anthropic` SDK, `ANTHROPIC_API_KEY`). Develop on `skeleton` (OpenRouter) and merge `skeleton` in when ready; the backend lives in `storyteller/llm.py`, `storyteller/clients.py`, the model block of `storyteller/config.py` and the client lines of `storyteller/pipeline.py`, so expect merge conflicts only there. Plan (two-backend version, later simplified): `docs/plans/2026-11-13-anthropic-invocation.md`; progress and resume point: `store/20_anthropic_invocation/CONTEXT.md`.
+- `anthropic_invocation` (from `skeleton` at 8ce1517): **the submission**, Anthropic-only (`anthropic` SDK, `ANTHROPIC_API_KEY`). Develop on `skeleton` (OpenRouter) and merge `skeleton` in when ready; the backend lives in `storyteller/llm.py`, the model block of `storyteller/config.py` and the client lines of `storyteller/pipeline.py`, so expect merge conflicts only there. Plan (two-backend version, later simplified): `docs/plans/2026-11-13-anthropic-invocation.md`; progress and resume point: `store/20_anthropic_invocation/CONTEXT.md`.
 
 ## Where things live
 - Spec: `docs/SPEC.md`. Plan: `docs/plans/2026-11-11-storyteller-skeleton.md`

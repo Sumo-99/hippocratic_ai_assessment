@@ -77,7 +77,7 @@ After a story is delivered, the user can ask for changes, and each change is a t
 - **Judge checks are shown to the writer.** The category files include their `## Judge checks` section in the generation prompt too, so the writer sees what it will be judged on. Alternative: strip that section for generation.
 - **Other hard failures at the cap still show the story.** For example, a story still failing wind_down after 3 revisions is shown; only a safety failure is withheld.
 - **`--baseline` sends no system prompt**, exactly like the original `main.py`.
-- **One client per run**, made by `build_client()` (`storyteller/clients.py`), so the budget guard is per run. Only `clients.py` constructs the client; a test enforces it, so a backend change touches `clients.py` and `llm.py` only.
+- **One client per run**: `pipeline.py` makes a fresh `AnthropicClient` (`storyteller/llm.py`) each turn, so the budget guard is per run. A backend change touches `llm.py` and those two lines of `pipeline.py`.
 
 ## Model access
 

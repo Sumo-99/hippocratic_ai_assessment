@@ -20,8 +20,7 @@ from .feedback import build_feedback
 from .gate import check_request, gate_message
 from .generate import revise_story, write_story
 from .judge import evaluate
-from .clients import build_client
-from .llm import BudgetExceeded, LLMClient
+from .llm import AnthropicClient, BudgetExceeded, LLMClient
 from .options import get_options, pick
 from .models import DraftVersion, Evaluation, PipelineResult, StorySession, StorySpec
 from .overrides import apply_overrides
@@ -224,7 +223,7 @@ async def _turn(session: StorySession, llm: LLMClient | None,
         if llm is None:
             # One fresh client per turn: its total_cost (the budget guard) is per instance.
             # Created inside `try` so a missing key still writes a trace.
-            llm = build_client(on_usage=trace.on_usage)
+            llm = AnthropicClient(on_usage=trace.on_usage)
         result = await _run(session, llm, trace, feedback)
     except BudgetExceeded as exc:
         # Report budget exhaustion gracefully so feedback turns preserve the last good story.
@@ -258,5 +257,5 @@ async def give_feedback(session: StorySession, feedback: str,
 
 async def baseline(request: str, llm: LLMClient | None = None) -> str:
     """The original main.py behaviour, for comparison: one call, just the request."""
-    llm = llm or build_client()
+    llm = llm or AnthropicClient()
     return await llm.text("", request, stage="baseline")
