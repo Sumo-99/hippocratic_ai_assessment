@@ -81,3 +81,9 @@ In my tests on 10 vague requests, this gave 10 distinct premises. Just telling t
 ## Baseline comparison
 
 The baseline version is the original single-call script, running on the same model. Keeping it in the tool let me compare my system against a vanilla one request by request, rather than judging my own output in a vacuum.
+
+## What I'd Build Next
+
+* Per-user recent-history exclusion so repeat customers don't get repeated premises. A plain random pick over the model's generated options collides early, so excluding the last K picks is what actually guarantees no repeats for a returning user.
+* An LLM "keep-better" comparison inside the revision loop, for when a revision passes the rubric but reads worse than the draft it replaced. Today a code guard only counts how many checks pass or fail, so it can't catch a revision that is technically compliant but duller.
+* Judge calibration on stories with planted flaws alongside clean stories, to measure false passes and false fails. The whole loop trusts the judge's verdicts, so knowing its error rates in each direction is what tells me whether to trust the gate.
