@@ -24,9 +24,7 @@ BUDGET_MESSAGE = (
 
 # ---- the regression guard (pure code, no LLM) --------------------------------------------
 
-# Soft dimensions the guard also weighs when there is feedback (preferences, or a
-# feedback turn). faithfulness_premise reads the whole conversation, so it is the judge's signal
-# that a revision dropped the requested change.
+# On feedback turns, protect the requested change via the judge's faithfulness signal.
 PROTECT_FEEDBACK = ("faithfulness_premise",)
 
 
