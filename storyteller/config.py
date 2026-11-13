@@ -12,6 +12,21 @@ load_dotenv()
 BASE_URL = "https://openrouter.ai/api/v1"
 MODEL = "anthropic/claude-haiku-5.5"  # used for EVERY call
 
+# Which backend clients.build_client() makes: "openrouter" (default) or "anthropic".
+# Choosing between two fixed endpoints is not the redirect the DECISION above forbids.
+PROVIDER = os.getenv("LLM_PROVIDER", "openrouter").strip().lower()
+
+# Direct Anthropic API (storyteller/llm_anthropic.py). Same model as MODEL, native ID.
+ANTHROPIC_MODEL = "claude-haiku-5-5"
+# Mirrors OpenRouter's reasoning off: no hidden (billed) thinking tokens. Haiku 5.5 accepts
+# "disabled" at its default effort; Opus 5.5 and Sonnet 5.5 reject it, so change both together.
+ANTHROPIC_THINKING = {"type": "disabled"}
+# Anthropic list price for claude-haiku-5-5 (prompts up to 100K tokens). The Anthropic API
+# returns no dollar cost, so these are the ONLY cost source on that path: change them with
+# ANTHROPIC_MODEL or the budget guard reads wrong.
+ANTHROPIC_PRICE_IN_PER_TOKEN = 0.10 / 1_000_000
+ANTHROPIC_PRICE_OUT_PER_TOKEN = 0.50 / 1_000_000
+
 MAX_ROUNDS = int(os.getenv("MAX_ROUNDS", 3))          # max revisions of the story
 TARGET_WORDS = int(os.getenv("TARGET_WORDS", 600))    # prompt says "about 500-700 words"
 WORD_RANGE = (400, 900)                               # what the code check accepts
