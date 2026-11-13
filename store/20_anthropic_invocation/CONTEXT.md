@@ -16,8 +16,9 @@ One job: add `AnthropicClient` behind a `build_client()` factory and `LLM_PROVID
 Do NOT load: other stages' folders, `docs/SPEC.md`, `runs/`, `.env`.
 
 ## Environment
-- Worktree: `/Users/sumanthramesh/Documents/dev/hippocratic_takehome/hippocratic_ai_assessment-anthropic` (branch `anthropic_invocation`).
-- Python: the main checkout's venv, `PY=/Users/sumanthramesh/Documents/dev/hippocratic_takehome/hippocratic_ai_assessment/.venv/bin/python`. `anthropic` 2.8.0 is installed there (it uses `httpx2`; `openai` uses `httpx`).
+- Built in a temporary worktree, removed 2026-11-13 after everything was pushed. Work on branch `anthropic_invocation` in the main checkout from now on.
+- The Anthropic key lives in the main checkout as `.env.anthropic` (gitignored). On this branch, `.env` needs `ANTHROPIC_API_KEY`. The live-run traces moved to the main checkout's `runs/`.
+- Python: the main checkout's venv, `.venv/bin/python`. `anthropic` 2.8.0 is installed there (it uses `httpx2`; `openai` uses `httpx`).
 - Baseline before any change: **210 passed**.
 
 ## Progress (RESUME HERE: update after every finished step)
