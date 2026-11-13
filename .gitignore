@@ -22,8 +22,9 @@ runs/*
 .idea/
 .vscode/
 
-# Docs are kept local on this branch only (anthropic_invocation)
-docs/
+# Docs are kept local on this branch only (anthropic_invocation), except the README's diagrams
+/docs/*
+!/docs/diagrams/
 # CLAUDE.md is kept local on this branch only (anthropic_invocation)
 /CLAUDE.md
 # store/ is kept local on this branch only (anthropic_invocation)
