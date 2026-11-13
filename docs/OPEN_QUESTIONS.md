@@ -76,11 +76,12 @@ After a story is delivered, the user can ask for changes, and each change is a t
 - **Judge checks are shown to the writer.** The category files include their `## Judge checks` section in the generation prompt too, so the writer sees what it will be judged on. Alternative: strip that section for generation.
 - **Other hard failures at the cap still show the story.** For example, a story still failing wind_down after 3 revisions is shown; only a safety failure is withheld.
 - **`--baseline` sends no system prompt**, exactly like the original `main.py`.
-- **One `OpenRouterClient` per run**, so the budget guard is per run.
+- **One client per run**, made by `build_client()` (`storyteller/clients.py`), so the budget guard is per run. Only `clients.py` names a concrete client; a test enforces it.
 
 ## Spec overrides
 
-- Model access goes through OpenRouter (`https://openrouter.ai/api/v1`, model `anthropic/claude-haiku-5.5`) with the `openai` SDK, not the `anthropic` SDK. The key is `OPENROUTER_API_KEY`.
+- Model access goes through OpenRouter by default (`https://openrouter.ai/api/v1`, model `anthropic/claude-haiku-5.5`) with the `openai` SDK. The key is `OPENROUTER_API_KEY`.
+- `LLM_PROVIDER=anthropic` switches to the Anthropic API directly (`anthropic` SDK, model `claude-haiku-5-5`, key `ANTHROPIC_API_KEY`). Structured output there uses `output_config.format` (JSON schema); thinking is disabled; cost is computed from token counts at the list price in `config.py`, since the API returns no dollar cost; refusals fail at once without a retry. Shared behaviour (retries, budget guard, usage callback) lives in `BaseLLMClient` and is pinned by `tests/test_llm_contract.py`.
 - No `temperature` is sent; the model doesn't support it. Structured output uses OpenRouter's JSON-schema mode with `provider.require_parameters: true`, validated with pydantic. Hidden reasoning is turned off.
 
 ## Deferred: what I'd build next (candidates, let evals decide)

@@ -61,6 +61,8 @@ pip install -r requirements.txt
 cp .env.example .env        # then put your OpenRouter key in OPENROUTER_API_KEY
 ```
 
+Backend: by default every call goes through OpenRouter. To call the Anthropic API directly, set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY` in `.env` (or the shell). Both backends use Claude Haiku 5.5 and behave the same: retries, budget guard, traces.
+
 Run it:
 
 ```bash
