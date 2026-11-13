@@ -29,7 +29,7 @@ def skipped_dimensions(spec: StorySpec) -> set[str]:
         skipped.add("faithfulness_named")
     if spec.premise is None:
         skipped.add("faithfulness_premise")
-    if spec.category is None:  # no recipe, so no category checks
+    if spec.category is None:  # no category
         skipped.add("category_checks")
     return skipped
 
