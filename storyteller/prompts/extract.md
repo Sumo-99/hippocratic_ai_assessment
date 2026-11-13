@@ -15,10 +15,10 @@ Fill these fields:
   - "a story about a cat" → premise: "a cat"
   - "a bear who can't find his hat" → premise: "a bear who can't find his hat"
   If the subject sounds rough or scary, still record it as asked ("a story about a castle siege" → premise: "a castle siege"). The writer tells it gently later. Never drop the subject or replace it with a different one.
-  Leave premise null only when the request names no subject at all ("tell me a story", "a bedtime story for my daughter", "something calm for tonight"), or when its only content is a worry (that goes in worry).
-- worry: a fear or worry the child has ("scared of the dark", "nervous about the first day of school"). Otherwise null.
+  A fear or worry the child has is the premise too: "my son is scared of the dark" → premise: "scared of the dark".
+  Leave premise null only when the request names no subject at all ("tell me a story", "a bedtime story for my daughter", "something calm for tonight").
 - listener: who the story is for, if the request says: "for my daughter" → "daughter", "my son is scared of the dark" → "son", "for a 7 year old" → "7 year old", "something my kids will like" → "kids". Otherwise null. The listener is not a story character.
-- category: one of adventure, silly, comfort, gentle_lesson, cozy, or null.
+- category: one of adventure, silly, comfort, cozy, or null.
 
 Rules:
 - A tone or feeling that the category does not already cover goes into the premise in a few words, never as invented events:
@@ -36,9 +36,8 @@ Rules:
   - "my little brother Sam" → characters: [{name: "Sam", role: null}]
   - "my daughter Priya and her dog" → characters: [{name: "Priya", role: null}, {name: null, role: "Priya's dog"}]
   - "a story about Alice and her cat Bob" → Bob keeps role "Alice's cat" (a story character's role is never dropped)
-  The worry or wish about the family member still counts: "my son is scared of the dark" still has worry "scared of the dark".
-- Choose comfort only if the request contains a worry. No worry, no comfort.
-- If the request involves a moral dilemma or a choice about right and wrong (sharing, telling the truth, being kind), choose gentle_lesson.
+  The worry or wish about the family member still counts: "my son is scared of the dark" still has premise "scared of the dark".
+- Choose comfort only if the request contains a fear or worry the child has. No worry, no comfort.
 - Choose adventure for quests, journeys, exploring or finding something.
 - Choose silly for funny, ridiculous or goofy requests.
 - Choose cozy for calm, sleepy, soothing requests.

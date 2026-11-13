@@ -29,7 +29,7 @@ def skipped_dimensions(spec: StorySpec) -> set[str]:
         skipped.add("faithfulness_named")
     if spec.premise is None:
         skipped.add("faithfulness_premise")
-    if spec.category is None:  # no category bundle, so no category checks
+    if spec.category is None:  # no recipe, so no category checks
         skipped.add("category_checks")
     return skipped
 
@@ -58,7 +58,6 @@ def _rubric_context(spec: StorySpec, request: str) -> str:
         f"Characters named by the user: {describe_characters(spec.characters) or 'none'}",
         f"Setting named by the user: {spec.setting or 'none'}",
         f"Premise: {spec.premise or 'none specified'}",
-        f"Worry: {spec.worry or 'none'}",
     ]
     return "\n".join(lines)
 

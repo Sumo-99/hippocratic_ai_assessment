@@ -24,8 +24,7 @@ PRICE_OUT_PER_TOKEN = 0.50 / 1_000_000
 LATENCY_BUDGET_S = int(os.getenv("LATENCY_BUDGET_S", 60))
 RETRIES = int(os.getenv("RETRIES", 3))
 
-FALLBACK_CATEGORY = "cozy"  # used when the request has no clear category
-# Vague requests get a random pick from 5 model-made story options (storyteller/options.py).
+# Requests with no premise get a random pick from 5 model-made ideas (storyteller/options.py).
 # Set OPTIONS_SEED to make the pick repeatable per request, e.g. for eval runs.
 OPTIONS_SEED = int(os.environ["OPTIONS_SEED"]) if os.getenv("OPTIONS_SEED") else None
 RUNS_DIR = os.getenv("RUNS_DIR", "runs")

@@ -1,6 +1,6 @@
 """The whole story flow:
 
-    gate -> extract -> spec -> [options, if vague] -> write -> [judge -> feedback -> revise -> judge -> keep better]
+    gate -> extract -> [5 ideas, if no premise] -> write -> [judge -> feedback -> revise -> judge -> keep better]
     x up to MAX_ROUNDS -> final safety check -> story (or a friendly message)
 
 `run(request)` is the one public entry; the CLI and a future eval script both use it.
@@ -11,10 +11,10 @@ from . import config
 from .extract import extract
 from .feedback import build_feedback
 from .gate import check_request, gate_message
-from .generate import make_spec, revise_story, write_story
+from .generate import revise_story, write_story
 from .judge import evaluate
 from .llm import BudgetExceeded, LLMClient, OpenRouterClient
-from .options import get_options, is_vague, pick
+from .options import get_options, pick
 from .models import DraftVersion, PipelineResult, StorySpec
 from .trace import Trace
 
@@ -92,16 +92,16 @@ async def _run(request: str, llm, trace: Trace) -> PipelineResult:
         trace.set("final", {"status": "rejected"})
         return PipelineResult(status="rejected", story=None, message=rejection, trace_path=None)
 
-    # 2. Extraction -> the story's variables (cozy only if nothing was named).
+    # 2. Extraction -> the story's variables. Anything the request didn't give stays empty.
     with trace.stage("extract"):
         e = await extract(llm, request)
     trace.set("extraction", e.model_dump())
-    spec = make_spec(e)
+    spec = StorySpec(**e.model_dump())
 
-    # 3. A vague request (nothing named) gets 5 model-made story options; code picks one.
-    if is_vague(spec):
+    # 3. No premise -> 5 model-made ideas that keep what was named; code picks one.
+    if spec.premise is None:
         with trace.stage("options"):
-            options = await get_options(llm, spec.category)
+            options = await get_options(llm, spec)
         i = pick(options, config.OPTIONS_SEED, request)
         trace.set("options", {"list": [o.model_dump() for o in options],
                               "picked_index": i, "seed": config.OPTIONS_SEED})
@@ -115,7 +115,7 @@ async def _run(request: str, llm, trace: Trace) -> PipelineResult:
 
     # 5. Final safety check: a story that fails safety is never shown.
     if "safety" in ev.hard_failures:
-        # TODO(safety-fallback): a later version could retry with a fresh cozy draft first.
+        # TODO(safety-fallback): a later version could retry with a fresh draft first.
         trace.set("final", {"status": "safety_message", **summary})
         return PipelineResult(status="safety_message", story=None,
                               message=CANNED_SAFETY_MESSAGE, trace_path=None)

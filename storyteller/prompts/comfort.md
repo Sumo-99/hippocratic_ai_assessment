@@ -1,6 +1,6 @@
 # Category: comfort
 
-The child has a worry. The story helps them feel less alone with it.
+The child has a worry (it is the Premise). The story helps them feel less alone with it.
 
 ## Structure
 1. Meet a character who has the same worry as the child.

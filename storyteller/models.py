@@ -4,7 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-Category = Literal["adventure", "silly", "comfort", "gentle_lesson", "cozy"]
+# The story recipe: which category prompt the writer gets and which checks the judge adds.
+Category = Literal["adventure", "silly", "comfort", "cozy"]
 
 
 # ---- schemas the LLM fills in (sent as strict JSON schemas) ------------------------------
@@ -44,10 +45,9 @@ class Extraction(BaseModel):
     """What the user actually asked for. Anything not in the request stays empty/null."""
     characters: list[Character]
     setting: str | None
-    premise: str | None  # what happens, plus any tone the category doesn't cover
-    worry: str | None    # only a fear the request actually states; never invented
+    premise: str | None  # what the story is about, in the request's words (a worry goes here)
     listener: str | None  # who the story is for ("daughter", "6 year old"); not a character
-    category: Category | None
+    category: Category | None  # None = no recipe: the writer gets the base prompt alone
 
 
 class Verdict(BaseModel):
@@ -78,7 +78,7 @@ class JudgeResult(BaseModel):
 
 
 class StoryOption(BaseModel):
-    """One model-made story idea for a vague request (storyteller/options.py)."""
+    """One model-made story idea for a request with no premise (storyteller/options.py)."""
     characters: str
     setting: str
     situation: str
@@ -90,18 +90,10 @@ class StoryOptions(BaseModel):
 
 # ---- types only our code uses ------------------------------------------------------------
 
-class StorySpec(BaseModel):
-    """The variables the storyteller and judge work from (the extraction, with a category).
-    category None = the request named something but no clear category: base prompt only."""
-    category: Category | None
-    characters: list[Character]
-    setting: str | None
-    premise: str | None
-    worry: str | None
-    listener: str | None = None
-    # The option picked for a vague request. Only the writer sees it: the judge still treats
-    # the request as naming nothing, so it never checks faithfulness to an idea the parent
-    # didn't ask for.
+class StorySpec(Extraction):
+    """What the writer and judge work from: the extraction, plus the idea picked when the
+    request had no premise. Only the writer sees the idea: the judge checks faithfulness to
+    what the parent asked for, never to an idea the model made up."""
     idea: StoryOption | None = None
 
 

@@ -39,7 +39,7 @@ def gate_no(*_):
 def extraction(*_):
     return Extraction(characters=[Character(name="Alice", role=None),
                                   Character(name="Bob", role="Alice's cat")], setting=None, premise="fly to the moon",
-                      worry=None, listener=None, category="adventure")
+                      listener=None, category="adventure")
 
 
 def generate(*_):
@@ -266,11 +266,10 @@ async def test_verbose_details_print_from_trace(capsys):
     assert "total cost: $0.0000" in out and result.trace_path in out
 
 
-# ---- story options for vague requests -----------------------------------------------------
+# ---- story ideas for requests with no premise -----------------------------------------------------
 
 def vague_extraction(*_):
-    return Extraction(characters=[], setting=None, premise=None, worry=None, listener=None,
-                      category=None)
+    return Extraction(characters=[], setting=None, premise=None, listener=None, category=None)
 
 
 def five_options(*_):
@@ -308,7 +307,27 @@ async def test_judge_does_not_see_the_picked_option():
         assert f"c{i}" not in system + user and f"x{i}" not in system + user
 
 
-async def test_no_options_call_when_the_request_names_something():
+async def test_no_options_call_when_the_request_has_a_premise():
     llm = fake(judge_from(lambda t: set()))
     await pipeline.run("Alice and her cat Bob fly to the moon", llm)
     assert "options" not in stages(llm)
+
+
+async def test_named_characters_without_a_premise_still_get_ideas():
+    # "Alice and her cat Bob": characters but no premise -> ideas, keeping Alice and Bob.
+    def characters_only(*_):
+        return Extraction(characters=[Character(name="Alice", role=None)], setting=None,
+                          premise=None, listener=None, category=None)
+    llm = FakeLLM({"gate": [gate_ok], "extract": [characters_only], "options": [five_options],
+                   "generate": [generate] * MANY, "judge": [judge_from(lambda t: set())] * MANY})
+    await pipeline.run("Alice", llm)
+    assert stages(llm) == ["gate", "extract", "options", "generate", "judge"]
+    writer = next(c for c in llm.calls if c[0] == "generate")[1]
+    assert "Characters: Alice" in writer and not any(f"c{i}" in writer for i in range(5))
+
+
+async def test_no_category_means_no_recipe_even_for_an_empty_request():
+    llm = options_fake()
+    await pipeline.run("tell me a story", llm)
+    writer = next(c for c in llm.calls if c[0] == "generate")[1]
+    assert not any(f"<{c}>" in writer for c in ("cozy", "silly", "adventure", "comfort"))
