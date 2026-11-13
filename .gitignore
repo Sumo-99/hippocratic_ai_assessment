@@ -24,3 +24,5 @@ runs/*
 
 # Docs are kept local on this branch only (anthropic_invocation)
 docs/
+# CLAUDE.md is kept local on this branch only (anthropic_invocation)
+/CLAUDE.md
