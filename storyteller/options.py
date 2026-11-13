@@ -1,12 +1,4 @@
-"""Story ideas for requests with no premise: one extra call asks for 5 distinct ideas that keep
-whatever the request did name (characters, setting, category), and code picks one at random.
-The pick fills only what the request left empty (see generate.build_system_prompt).
-
-This is what gives repeated vague requests variety. Tested as condition B in
-docs/findings/independent_thinking_experiement.md: with the writer inventing its own idea,
-vague requests converged on one template; with a random pick from model-made options, 10
-requests gave 10 distinct premises. The model proposes all 5 ideas itself: no human-written
-themes or premises steer them."""
+"""Generate five model-made story ideas for premise-free requests and select one at random."""
 import random
 
 from . import prompts

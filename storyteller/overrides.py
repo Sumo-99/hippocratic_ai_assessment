@@ -38,10 +38,7 @@ def active(overrides: list[Override]) -> list[Override]:
 
 def apply_overrides(ev: Evaluation, overrides: list[Override]) -> Evaluation:
     """Move failures the user asked for out of the blocking lists into `overridden`."""
-    # DECISION: the coarse override stays as a backstop under the precise one: the judge is now
-    # told each exception (judge._rubric_context), and the guard still ignores an overridden
-    # dimension's failure if the judge fails it anyway.
-    # "safety" is dropped here even if a model_construct-ed override names it.
+    # Apply precise judge exceptions as a backstop, while always excluding safety overrides.
     overridden = {o.dimension for o in active(overrides)}
     if not overridden:
         return ev

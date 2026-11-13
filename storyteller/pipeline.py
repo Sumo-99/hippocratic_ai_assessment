@@ -1,17 +1,5 @@
-"""The whole story flow:
-
-    gate -> extract -> [5 ideas, if no premise] -> write -> [judge -> feedback -> revise -> judge -> keep better]
-    x up to MAX_ROUNDS -> final safety check -> story (or a friendly message)
-
-A feedback turn takes the same path on the whole conversation text (request + every piece of
-feedback so far), except that round 0 revises the delivered story instead of writing a new one,
-and the ideas step never runs (the first turn's idea carries over):
-
-    gate -> extract -> revise(delivered story, the change) -> [judge -> ... as above]
-
-`run(request)` and `give_feedback(session, feedback)` are the public entries; the CLI and a
-future eval script use them. Every turn writes its own JSON trace to config.RUNS_DIR, even when
-it fails."""
+"""Run the story pipeline from request validation through writing, judging, and safety checks.
+Feedback turns revise the delivered story while preserving the original idea and trace."""
 import time
 
 from . import config
