@@ -56,13 +56,7 @@ def keep_better(prev: DraftVersion, new: DraftVersion,
                 protect: tuple[str, ...] = ()) -> DraftVersion:
     """Keep the previous version only if the revision is strictly worse on hard checks, or
     equal on them and worse on a `protect`ed dimension.
-
-    With no `protect`, soft failures play no part here. On a tie the NEW version wins, because
-    it was written to fix the latest feedback."""
-    # DECISION: safety outranks the count, so a safe version is never replaced by an unsafe
-    # one even if the unsafe one fails fewer hard checks overall.
-    # DECISION: protected dimensions only break ties on hard checks: fixing a hard failure still
-    # beats keeping the requested change (live run, store/17_feedback_live_smoke).
+    """
     return prev if _hard_rank(new, protect) > _hard_rank(prev, protect) else new
 
 
@@ -98,10 +92,6 @@ async def write_and_revise(llm, spec: StorySpec, trace: Trace, request: str,
         if previous is None:
             text, sent = await write_story(llm, spec), None
         else:
-            # DECISION: round 0 of a feedback turn is the turn's new baseline and is never
-            # guard-compared with the delivered story. The delivered story no longer meets what
-            # the user asked for, so it must not win just because it passed more hard checks;
-            # the loop below repairs the revision instead.
             sent = f"- Feedback on this story: {change}"
             text = await revise_story(llm, spec, previous.text, sent)
         kept = DraftVersion(round=0, text=text, evaluation=await _judge(llm, spec, text, request),
@@ -130,11 +120,7 @@ async def write_and_revise(llm, spec: StorySpec, trace: Trace, request: str,
                               "previous_hard": prev.evaluation.hard_failures,
                               "new_hard": new.evaluation.hard_failures})
             if kept is prev and _hard_rank(new)[:2] == _hard_rank(prev)[:2]:
-                # DECISION: the revision tied on hard checks and was rejected only because it
-                # dropped the requested change. The kept version is unchanged, so the next round
-                # would resend the identical feedback; live, that repeated the same undoing
-                # three times (store/17_feedback_live_smoke). Stop instead. A revision rejected
-                # for a new hard failure is still retried (test_the_walkthrough_example).
+                # Stop when a tied revision only drops the requested change; retry new hard failures.
                 guard_log[-1]["stopped"] = "revision dropped the requested change"
                 break
 
@@ -177,9 +163,7 @@ async def _run(session: StorySession, llm, trace: Trace,
     # 3. No premise on the FIRST turn -> 5 model-made ideas that keep what was named; code
     #    picks one. A feedback turn never asks for ideas again.
     if is_feedback:
-        # DECISION: a feedback turn keeps the idea the first turn picked (the story is built on
-        # it), even if the conversation still has no premise; re-picking would throw the story
-        # away. The idea fills only empty fields, so feedback that adds a premise wins over it.
+        # Keep the original idea on feedback turns; feedback still fills empty fields.
         spec = spec.model_copy(update={"idea": session.spec.idea})
     elif spec.premise is None:
         with trace.stage("options"):
@@ -243,9 +227,7 @@ async def _turn(session: StorySession, llm: LLMClient | None,
             llm = build_client(on_usage=trace.on_usage)
         result = await _run(session, llm, trace, feedback)
     except BudgetExceeded as exc:
-        # DECISION: running out of budget is expected behaviour, not a crash: tell the user
-        # kindly and keep the trace. Other errors (e.g. LLMError) still raise to the caller.
-        # A feedback turn hands back the incoming session, so the last good story survives.
+        # Report budget exhaustion gracefully so feedback turns preserve the last good story.
         trace.set("error", f"BudgetExceeded: {exc}")
         trace.set("final", {"status": "error"})
         result = PipelineResult(status="error", story=None, message=BUDGET_MESSAGE,
