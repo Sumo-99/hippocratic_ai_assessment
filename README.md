@@ -76,4 +76,3 @@ Feedback: each story unrolls inside a scroll, and a small night-sky scene plays 
 
 - Traces: every pipeline run writes a JSON trace to `runs/` (override with `RUNS_DIR`). It holds the request, gate result, extraction, every story version with its judge verdicts and the feedback it was revised from, the guard's keep decisions, timings, token usage and cost. `--baseline` writes none.
 - Cost guard: `MAX_RUN_COST_USD` (default 0.10) stops a run once its spend passes the cap and returns a friendly message. Other knobs (`MAX_ROUNDS`, `TARGET_WORDS`, `MAX_TOKENS`, `LATENCY_BUDGET_S`) can be overridden in the shell or in `.env`. The model and endpoint are fixed in `storyteller/config.py` on purpose.
-- Design: see `docs/ARCHITECTURE.md` (diagrams) and `docs/OPEN_QUESTIONS.md` (decisions and deferred items).
