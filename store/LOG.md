@@ -52,3 +52,4 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-13 | 20_anthropic_invocation | review | no blocking findings; real-SDK offline serialization check passed; waiting on user for key + live-smoke OK
 2026-11-13 | 20_anthropic_invocation | live | user-approved smoke on claude-haiku-5-5: 2 pipeline runs PASS, baseline OK, ~$0.005; all schemas accepted
 2026-11-13 | 20_anthropic_invocation | push | code committed (f980c0f..ae5bbb7) and pushed for the user's review; open: ANTHROPIC_BASE_URL gap
+2026-11-13 | 20_anthropic_invocation | simplify | Anthropic-only at the author's request; OpenRouter + LLM_PROVIDER + openai removed; base-URL gap fixed; 220 passed; live run PASS $0.0018

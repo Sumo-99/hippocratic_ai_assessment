@@ -1,5 +1,7 @@
 # Anthropic Direct Invocation Implementation Plan
 
+> **Superseded (2026-11-13):** this plan built a two-backend version (OpenRouter + Anthropic behind `LLM_PROVIDER`). At the author's request the branch was then made **Anthropic-only**: one `AnthropicClient` in `storyteller/llm.py`, built only by `build_client()` in `storyteller/clients.py`. See `store/20_anthropic_invocation/HANDOFF.md` for what exists now.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a second LLM backend that calls the Anthropic Messages API directly. You pick the backend with one env var, OpenRouter stays the default, and nothing outside the wrapper needs to know which backend is in use.

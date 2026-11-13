@@ -30,7 +30,9 @@ Do NOT load: other stages' folders, `docs/SPEC.md`, `runs/`, `.env`.
 - [x] Task 5: live smoke, user-approved: 2 pipeline runs PASS + baseline OK, about $0.005 total, all schemas accepted (details in HANDOFF.md)
 - [~] Task 6: code committed in 4 pieces (f980c0f..ae5bbb7) and pushed to origin/anthropic_invocation at the user's request; the user is reviewing on GitHub
 
-Next step: wait for the user's GitHub review. Open item they may want: the ANTHROPIC_BASE_URL gap (see HANDOFF.md). Then the data-flow note (review step 3) when asked, and set HANDOFF status: done.
+- [x] Simplify to Anthropic-only (author's request): one `AnthropicClient` in `llm.py`, `build_client()` kept as the only constructor, OpenRouter/`LLM_PROVIDER`/`openai` removed, `ANTHROPIC_BASE_URL` gap fixed, docs updated; 220 passed; one live run PASS ($0.0018); pushed.
+
+Next step: wait for the user's GitHub review. Then the data-flow note (review step 3) when asked, and set HANDOFF status: done.
 
 ## Outputs
 - Code left **uncommitted** until the user's review (Task 6). Notes in `store/` may be committed.
