@@ -72,8 +72,9 @@ class JudgeResult(BaseModel):
 # ---- types only our code uses ------------------------------------------------------------
 
 class StorySpec(BaseModel):
-    """The variables the storyteller and judge work from (the extraction, with a category)."""
-    category: Category
+    """The variables the storyteller and judge work from (the extraction, with a category).
+    category None = the request named something but no clear category: base prompt only."""
+    category: Category | None
     characters: list[Character]
     setting: str | None
     premise: str | None

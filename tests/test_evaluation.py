@@ -75,6 +75,11 @@ def test_named_faithfulness_runs_when_only_a_setting_was_named():
     assert "faithfulness_named" in judge.skipped_dimensions(spec(characters=[], setting=None))
 
 
+def test_category_checks_skipped_without_a_category():
+    assert "category_checks" in judge.skipped_dimensions(spec(category=None))
+    assert "category_checks" not in judge.skipped_dimensions(spec())
+
+
 async def test_judge_is_never_told_about_revisions():
     llm = FakeLLM({"judge": [judge_result()]})
     await judge.evaluate(llm, spec(), GOOD_STORY)

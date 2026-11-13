@@ -4,19 +4,25 @@ from .models import Extraction, StorySpec, describe_characters
 
 
 def make_spec(e: Extraction) -> StorySpec:
-    """The extraction becomes the story's variables. No clear category -> cozy, which needs
-    nothing from the request (the model invents a gentle premise itself)."""
-    return StorySpec(category=e.category or config.FALLBACK_CATEGORY, characters=e.characters,
+    """The extraction becomes the story's variables.
+
+    DECISION: the cozy fallback is only for requests that name nothing (no characters, setting
+    or premise). Cozy is a low-plot bundle that needs nothing from the request; given a subject
+    it turned camping or a penguin in Tokyo into a bedtime routine. If something is named but
+    the category is unclear, the category stays None and the base prompt works alone."""
+    category = e.category
+    if category is None and not (e.characters or e.setting or e.premise):
+        category = config.FALLBACK_CATEGORY
+    return StorySpec(category=category, characters=e.characters,
                      setting=e.setting, premise=e.premise, worry=e.worry,
                      listener=e.listener)
 
 
 def build_system_prompt(spec: StorySpec) -> str:
     """Base prompt + category bundle + one line per variable that is actually present."""
-    parts = [
-        prompts.load("base").substitute(target_words=config.TARGET_WORDS),
-        prompts.load(spec.category).substitute(),
-    ]
+    parts = [prompts.load("base").substitute(target_words=config.TARGET_WORDS)]
+    if spec.category:  # no category -> no bundle, the base prompt alone
+        parts.append(prompts.load(spec.category).substitute())
     lines = []
     if spec.characters:
         lines.append("Characters: " + describe_characters(spec.characters))

@@ -67,8 +67,8 @@ async def test_gate_and_extract_are_separate_calls():
 
 # ---- extraction -> spec -------------------------------------------------------------------
 
-def test_comfort_without_worry_normalized_to_cozy():
-    assert normalize(ext(category="comfort")).category == "cozy"
+def test_comfort_without_worry_loses_its_category():
+    assert normalize(ext(category="comfort")).category is None
     assert normalize(ext(category="comfort", worry="thunder")).category == "comfort"
 
 
@@ -83,10 +83,15 @@ def test_character_describe():
     assert Character(name=None, role="a badger").describe() == "a badger"
 
 
-def test_make_spec_falls_back_to_cozy_and_keeps_variables():
+def test_make_spec_falls_back_to_cozy_only_when_nothing_is_named():
+    assert make_spec(ext()).category == "cozy"
+    assert make_spec(ext(listener="son", worry=None)).category == "cozy"  # listener isn't content
+    for named in (dict(premise="a kite"), dict(setting="a barn"),
+                  dict(characters=[Character(name="Bo", role="a bear")])):
+        assert make_spec(ext(**named)).category is None
     s = make_spec(ext(premise="a kite", characters=[Character(name="Bo", role="a bear")], worry="thunder"))
-    assert s.category == "cozy" and s.premise == "a kite" and s.characters == [Character(name="Bo", role="a bear")]
-    assert make_spec(ext(category="silly")).category == "silly"
+    assert s.premise == "a kite" and s.characters == [Character(name="Bo", role="a bear")]
+    assert make_spec(ext(category="silly", premise="a kite")).category == "silly"
 
 
 def test_make_spec_carries_listener():
@@ -106,6 +111,11 @@ def test_system_prompt_omits_absent_variables():
 
 def test_system_prompt_with_no_variables_has_no_trailing_lines():
     assert build_system_prompt(spec()) == "BASE 600\n\nCOZY"
+
+
+def test_system_prompt_without_category_has_no_bundle():
+    p = build_system_prompt(spec(category=None, premise="a kite"))
+    assert p == "BASE 600\n\nPremise: a kite"
 
 
 async def test_write_and_revise():

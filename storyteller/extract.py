@@ -12,9 +12,10 @@ def normalize(e: Extraction) -> Extraction:
     """Code-side fixups of the LLM's extraction."""
     # A character with neither name nor role carries nothing; drop it.
     e = e.model_copy(update={"characters": [c for c in e.characters if c.name or c.role]})
-    # DECISION: comfort needs a worry to address; without one, fall back to cozy in code
-    # rather than trusting the model. A null category is turned into cozy later, in generate.make_spec.
+    # DECISION: comfort needs a worry to address; without one, drop the category in code
+    # rather than trusting the model. generate.make_spec then decides: cozy if nothing at all
+    # was named, otherwise no category bundle.
     if e.category == "comfort" and not e.worry:
-        return e.model_copy(update={"category": "cozy"})
+        return e.model_copy(update={"category": None})
     return e
 

@@ -22,11 +22,15 @@ def skipped_dimensions(spec: StorySpec) -> set[str]:
         skipped.add("faithfulness_named")
     if spec.premise is None:
         skipped.add("faithfulness_premise")
+    if spec.category is None:  # no category bundle, so no category checks
+        skipped.add("category_checks")
     return skipped
 
 
-def _category_checks(category: str) -> str:
+def _category_checks(category: str | None) -> str:
     """Pull the '## Judge checks' section out of the category prompt (whole text if absent)."""
+    if category is None:
+        return "(no category: skip category_checks)"
     text = prompts.load(category).template
     m = re.search(r"^## Judge checks\s*\n(.*?)(?=^## |\Z)", text, re.S | re.M)
     return (m.group(1) if m else text).strip()
@@ -35,7 +39,7 @@ def _category_checks(category: str) -> str:
 def _rubric_context(spec: StorySpec, skipped: set[str]) -> str:
     """Plain-text description of what the story was supposed to honour."""
     lines = [
-        f"Category: {spec.category}",
+        f"Category: {spec.category or 'none'}",
         f"Characters named by the user: {describe_characters(spec.characters) or 'none'}",
         f"Setting named by the user: {spec.setting or 'none'}",
         f"Premise: {spec.premise or 'none specified'}",
