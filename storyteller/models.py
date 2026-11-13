@@ -59,12 +59,11 @@ class Extraction(BaseModel):
     """What the user actually asked for. Anything not in the request stays empty/null."""
     characters: list[Character]
     setting: str | None
-    premise: str | None  # what the story is about, in the request's words (a worry goes here)
-    listener: str | None  # who the story is for ("daughter", "6 year old"); not a character
-    category: Category | None  # None = no category: the writer gets the base prompt alone
-    # The two fields below have Python defaults only for code and tests that build an
-    # Extraction by hand; llm._strict_schema still makes the model fill them in.
-    preferences: str | None = None  # the user's plain instructions on how to tell/change the story
+    premise: str | None  # what the story is about
+    listener: str | None  # intended listener, not a character
+    category: Category | None  # None uses only the base prompt
+    # Defaults support hand-built instances; the LLM schema still requires these fields.
+    preferences: str | None = None  # instructions for telling or changing the story
     overrides: list[Override] = []
 
 
@@ -109,12 +108,8 @@ class StoryOptions(BaseModel):
 # ---- types only our code uses ------------------------------------------------------------
 
 class StorySpec(Extraction):
-    """What the writer and judge work from: the extraction, plus the idea picked when the
-    request had no premise. Only the writer sees the idea: the judge checks faithfulness to
-    what the parent asked for, never to an idea the model made up."""
+    """Extraction plus an optional idea selected when the request lacks a premise."""
     idea: StoryOption | None = None
-    # preferences and overrides come from Extraction: the feedback sits on top of the
-    # writer's prompt stack, and overrides.apply_overrides overrides what they conflict with.
 
 
 class Evaluation(BaseModel):
