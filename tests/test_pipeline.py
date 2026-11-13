@@ -8,7 +8,7 @@ from string import Template
 import pytest
 
 from storyteller import config, pipeline, prompts
-from storyteller.fake import FakeLLM
+from fakes import FakeLLM
 from storyteller.llm import BudgetExceeded
 from storyteller.models import (Character, Check, DraftVersion, Evaluation, Extraction, GateResult, JudgeResult,
                                 Verdict)

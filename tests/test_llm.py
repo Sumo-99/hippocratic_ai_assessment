@@ -6,7 +6,7 @@ import httpx2
 import pytest
 
 from storyteller import config
-from storyteller.fake import FakeLLM
+from fakes import FakeLLM
 from storyteller.llm import AnthropicClient, BudgetExceeded, LLMError
 from storyteller.models import Check, GateResult
 from storyteller.trace import Trace

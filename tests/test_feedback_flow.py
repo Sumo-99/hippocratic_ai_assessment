@@ -12,7 +12,7 @@ from string import Template
 import pytest
 
 from storyteller import config, pipeline, prompts
-from storyteller.fake import FakeLLM
+from fakes import FakeLLM
 from storyteller.generate import PREFERENCES_HEADER
 from storyteller.judge import DIMENSIONS
 from storyteller.llm import BudgetExceeded

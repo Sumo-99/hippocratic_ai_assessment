@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from storyteller import config, prompts
 from storyteller.extract import extract, quoted
-from storyteller.fake import FakeLLM
+from fakes import FakeLLM
 from storyteller.models import Character, Evaluation, Extraction, JudgeResult, Override, Verdict, OverridableCheck
 from storyteller.overrides import apply_overrides, overridable_text
 

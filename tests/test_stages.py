@@ -5,7 +5,7 @@ import pytest
 
 from storyteller import prompts
 from storyteller.extract import extract
-from storyteller.fake import FakeLLM
+from fakes import FakeLLM
 from storyteller.gate import check_request, gate_message
 from storyteller.generate import build_system_prompt, revise_story, write_story
 from storyteller.models import Character, Check, Extraction, GateResult, StorySpec

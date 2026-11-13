@@ -1,7 +1,7 @@
 import pytest
 
 from storyteller import config, feedback, judge, prompts
-from storyteller.fake import FakeLLM
+from fakes import FakeLLM
 from storyteller.models import Character, Evaluation, JudgeResult, StorySpec, Verdict
 from string import Template
 
