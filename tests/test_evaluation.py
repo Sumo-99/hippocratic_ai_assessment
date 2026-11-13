@@ -7,6 +7,7 @@ from string import Template
 
 DIMS = config.HARD + [d for d in config.SOFT if d != "length"]
 GOOD_STORY = " ".join(["word"] * 600)
+REQUEST = "Mia the mouse finds a hat in the barn"
 
 
 @pytest.fixture(autouse=True)
@@ -32,25 +33,40 @@ def ev(hard=(), soft=(), words=600):
                       length_ok=True, hard_failures=list(hard), soft_failures=list(soft))
 
 
-async def test_skips_ignored_even_if_judge_fails_them():
+async def test_skipped_dimensions_are_not_sent_and_recorded_as_skipped():
     s = spec(characters=[], setting=None, premise=None)
+    # Even if a (fake) judge returned verdicts for them, skipped dimensions are not used.
     llm = FakeLLM({"judge": [judge_result(fail={"faithfulness_named",
                                                 "faithfulness_premise"})]})
-    e = await judge.evaluate(llm, s, GOOD_STORY)
+    e = await judge.evaluate(llm, s, GOOD_STORY, REQUEST)
     assert e.hard_failures == [] and e.soft_failures == []
+    sent = set(llm.schemas[0][1].model_fields)
+    assert not sent & {"faithfulness_named", "faithfulness_premise"}
+    assert sent == set(DIMS) - {"faithfulness_named", "faithfulness_premise"}
+    for d in ("faithfulness_named", "faithfulness_premise"):
+        assert getattr(e.judge, d).passed is None
+    assert e.judge.safety.passed is True
+
+
+async def test_faithfulness_sent_when_spec_has_the_fields():
+    llm = FakeLLM({"judge": [judge_result()]})
+    await judge.evaluate(llm, spec(), GOOD_STORY, REQUEST)
+    sent = set(llm.schemas[0][1].model_fields)
+    assert {"faithfulness_named", "faithfulness_premise"} <= sent
 
 
 async def test_judge_failures_reported_and_prompt_has_context():
     llm = FakeLLM({"judge": [judge_result(fail={"safety", "engagement"})]})
-    e = await judge.evaluate(llm, spec(), GOOD_STORY)
+    e = await judge.evaluate(llm, spec(), GOOD_STORY, REQUEST)
     assert e.hard_failures == ["safety"] and e.soft_failures == ["engagement"]
     system = llm.calls[0][1]
     assert "Mia (a mouse)" in system and "cosy check" in system
+    assert REQUEST in system  # the raw request reaches the judge
 
 
 async def test_length_failure_is_soft():
     llm = FakeLLM({"judge": [judge_result()]})
-    e = await judge.evaluate(llm, spec(), "too short")
+    e = await judge.evaluate(llm, spec(), "too short", REQUEST)
     assert e.soft_failures == ["length"] and e.hard_failures == [] and not e.length_ok
 
 
@@ -82,6 +98,6 @@ def test_category_checks_skipped_without_a_category():
 
 async def test_judge_is_never_told_about_revisions():
     llm = FakeLLM({"judge": [judge_result()]})
-    await judge.evaluate(llm, spec(), GOOD_STORY)
+    await judge.evaluate(llm, spec(), GOOD_STORY, REQUEST)
     _, system, user = llm.calls[0]
     assert user == f"STORY:\n{GOOD_STORY}" and "revis" not in (system + user).lower()

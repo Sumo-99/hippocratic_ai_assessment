@@ -45,11 +45,11 @@ def keep_better(prev: DraftVersion, new: DraftVersion) -> DraftVersion:
 
 # ---- write, judge, revise ----------------------------------------------------------------
 
-async def write_and_revise(llm, spec: StorySpec, trace: Trace) -> DraftVersion:
+async def write_and_revise(llm, spec: StorySpec, trace: Trace, request: str) -> DraftVersion:
     """First draft, then up to MAX_ROUNDS revisions. Returns the version we keep."""
     with trace.stage("write_and_revise"):
         text = await write_story(llm, spec)
-        kept = DraftVersion(round=0, text=text, evaluation=await evaluate(llm, spec, text),
+        kept = DraftVersion(round=0, text=text, evaluation=await evaluate(llm, spec, text, request),
                             feedback_sent=None)
         # TODO(critique-check): an open-ended "what would a parent dislike?" pass would go
         # here, after evaluate. Deferred until evals show the rubric misses things.
@@ -64,7 +64,7 @@ async def write_and_revise(llm, spec: StorySpec, trace: Trace) -> DraftVersion:
             # The revision starts from the kept version, in full, under the same system prompt.
             new_text = await revise_story(llm, spec, kept.text, feedback)
             new = DraftVersion(round=rnd, text=new_text,
-                               evaluation=await evaluate(llm, spec, new_text),
+                               evaluation=await evaluate(llm, spec, new_text, request),
                                feedback_sent=feedback)
             versions.append(new)
             previous = kept
@@ -98,7 +98,7 @@ async def _run(request: str, llm, trace: Trace) -> PipelineResult:
     spec = make_spec(e)
 
     # 3. Write, judge and revise.
-    final = await write_and_revise(llm, spec, trace)
+    final = await write_and_revise(llm, spec, trace, request)
     ev = final.evaluation
     summary = {"round": final.round, "all_passed": ev.all_passed,
                "hard_failures": ev.hard_failures, "soft_failures": ev.soft_failures}

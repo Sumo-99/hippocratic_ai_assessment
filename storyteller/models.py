@@ -51,13 +51,21 @@ class Extraction(BaseModel):
 
 
 class Verdict(BaseModel):
+    """One rubric dimension as recorded. passed is None when the dimension was skipped:
+    it did not apply to this request, so it was never sent to the judge."""
     evidence: str
-    passed: bool
+    passed: bool | None
     fix: str | None
 
 
+class JudgedVerdict(Verdict):
+    """What the judge LLM fills in for a dimension it was asked about: always a real verdict."""
+    passed: bool
+
+
 class JudgeResult(BaseModel):
-    """Fixed fields, so a strict schema guarantees every dimension is judged."""
+    """Every dimension, as recorded. The judge LLM gets a narrower schema built from this one
+    (judge._reply_schema) holding only the dimensions that apply to the request."""
     safety: Verdict
     wind_down: Verdict
     faithfulness_named: Verdict
