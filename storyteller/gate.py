@@ -1,8 +1,6 @@
 """Gate stage: one LLM call that judges the REQUEST with two checks (safety, relevance),
 not any story. Both must pass before extraction runs.
 Unsafe-but-reshapeable requests count as safe; the story prompt reshapes them."""
-# TODO(edgy-requests): requests like "a dragon who eats the villagers" are borderline. Decide
-# whether the gate should pass them (and let the judge catch it) or reject up front.
 from . import prompts
 from .models import GateResult
 

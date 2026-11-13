@@ -78,6 +78,18 @@ def test_character_describe():
     assert Character(name=None, role="a badger").describe() == "a badger"
 
 
+def test_spec_inherits_preferences_and_overrides_from_the_extraction():
+    """pipeline builds StorySpec(**extraction.model_dump()): the feedback (preferences) and overrides
+    reach the writer and judge with no copying step."""
+    from storyteller.models import Override
+    o = Override(quote="end on a cliffhanger", dimension="wind_down", allow="end on a cliffhanger")
+    e = ext(premise="a kite", preferences="End on a cliffhanger.", overrides=[o])
+    s = StorySpec(**e.model_dump())
+    assert s.preferences == "End on a cliffhanger." and s.overrides == [o]
+    plain = StorySpec(**ext(premise="a kite").model_dump())
+    assert plain.preferences is None and plain.overrides == []
+
+
 # ---- prompt assembly ----------------------------------------------------------------------
 
 def test_system_prompt_omits_absent_variables():
@@ -100,6 +112,33 @@ def test_system_prompt_includes_listener():
 def test_system_prompt_without_category_has_no_bundle():
     p = build_system_prompt(spec(category=None, premise="a kite"))
     assert p == "BASE 600\n\nPremise: a kite"
+
+
+PREFS_BLOCK = ("## Feedback on this story (this comes first)\n"
+               "Where this feedback conflicts with anything below, follow the feedback, "
+               "except the Safety rules, which always apply.\n"
+               "Make the dragon funnier.")
+
+
+def test_preferences_block_sits_on_top_of_the_prompt():
+    p = build_system_prompt(spec(preferences="Make the dragon funnier.", premise="a kite"))
+    assert p == PREFS_BLOCK + "\n\nBASE 600\n\nCOZY\n\nPremise: a kite"
+    assert p.index("Make the dragon funnier.") < p.index("BASE")
+    assert "except the Safety rules, which always apply" in p
+
+
+def test_no_preferences_means_prompt_unchanged():
+    # Byte-identical to a request-only run: no header, no extra blank lines.
+    assert build_system_prompt(spec()) == "BASE 600\n\nCOZY"
+    assert build_system_prompt(spec(preferences="")) == "BASE 600\n\nCOZY"
+    assert "wishes" not in build_system_prompt(spec(premise="a kite", listener="son"))
+
+
+async def test_revise_keeps_preferences_on_top():
+    llm = FakeLLM({"revise": ["better"]})
+    await revise_story(llm, spec(preferences="Make the dragon funnier."), "story", "funnier")
+    system = llm.calls[0][1]
+    assert system.startswith(PREFS_BLOCK + "\n\nBASE 600") and system.endswith("REVISE")
 
 
 async def test_write_and_revise():

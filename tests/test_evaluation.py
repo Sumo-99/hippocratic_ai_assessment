@@ -101,3 +101,38 @@ async def test_judge_is_never_told_about_revisions():
     await judge.evaluate(llm, spec(), GOOD_STORY, REQUEST)
     _, system, user = llm.calls[0]
     assert user == f"STORY:\n{GOOD_STORY}" and "revis" not in (system + user).lower()
+
+
+# ---- precise override: the parent's exceptions reach the judge (17_feedback_live_smoke) -------
+
+def test_rubric_context_without_overrides_is_unchanged():
+    ctx = judge._rubric_context(spec(), REQUEST)
+    assert "exception" not in ctx.lower()
+    assert ctx.splitlines()[-1].startswith("Premise:")  # nothing appended after the variables
+
+
+def test_rubric_context_lists_the_parents_exceptions():
+    from storyteller.models import Override
+    sp = spec(overrides=[Override(quote="end on a cliffhanger", dimension="wind_down",
+                                  allow="end on a cliffhanger")])
+    ctx = judge._rubric_context(sp, REQUEST)
+    assert judge.EXCEPTIONS_HEADER in ctx
+    assert "- wind_down: end on a cliffhanger" in ctx
+    # the header tells every dimension not to fail or "fix" the exception, safety excepted
+    assert "never" in judge.EXCEPTIONS_HEADER.lower() and "safety" in judge.EXCEPTIONS_HEADER.lower()
+
+
+def test_rubric_context_never_lists_safety_even_if_smuggled():
+    from storyteller.models import Override
+    smuggled = Override.model_construct(quote="x", dimension="safety", allow="anything goes")
+    ctx = judge._rubric_context(spec(overrides=[smuggled]), REQUEST)
+    assert "anything goes" not in ctx and judge.EXCEPTIONS_HEADER not in ctx
+
+
+async def test_judge_system_prompt_carries_the_exceptions():
+    from storyteller.models import Override
+    sp = spec(overrides=[Override(quote="leave it hanging", dimension="wind_down",
+                                  allow="leave the ending open")])
+    llm = FakeLLM({"judge": [judge_result()]})
+    await judge.evaluate(llm, sp, GOOD_STORY, REQUEST)
+    assert "- wind_down: leave the ending open" in llm.calls[0][1]
