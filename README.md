@@ -1,56 +1,12 @@
-# Hippocratic AI Coding Assignment
-Welcome to the [Hippocratic AI](https://www.hippocraticai.com) coding assignment
+# Bedtime Story Teller
 
-## Instructions
-The attached code is a simple python script skeleton. Your goal is to take any simple bedtime story request and use prompting to tell a story appropriate for ages 5 to 10.
-- Incorporate a LLM judge to improve the quality of the story
-- Provide a block diagram of the system you create that illustrates the flow of the prompts and the interaction between judge, storyteller, user, and any other components you add
-- Do not change the openAI model that is being used. 
-- Please use your own openAI key, but do not include it in your final submission.
-- Otherwise, you may change any code you like or add any files
+This is my submission for the Hippocratic AI take-home assessment: a bedtime story teller for children aged 5 to 10.
 
----
+My take on this was to build a script that lets a user interact with the system directly. You start by asking for a story, then you get a chance to give feedback on it, and this can keep going till you're satisfied.
 
-## Rules
-- This assignment is open-ended
-- You may use any resources you like with the following restrictions
-   - They must be resources that would be available to you if you worked here (so no other humans, no closed AIs, no unlicensed code, etc.)
-   - Allowed resources include but not limited to Stack overflow, random blogs, chatGPT et al
-   - You have to be able to explain how the code works, even if chatGPT wrote it
-- DO NOT PUSH THE API KEY TO GITHUB. OpenAI will automatically delete it
+I also left in the ability to run the version that was provided to me, which I call the baseline version. This helped me compare how my system performs against a simple vanilla one.
 
----
-
-## What does "tell a story" mean?
-It should be appropriate for ages 5-10. Other than that it's up to you. Here are some ideas to help get the brain-juices flowing!
-- Use story arcs to tell better stories
-- Allow the user to provide feedback or request changes
-- Categorize the request and use a tailored generation strategy for each category
-
----
-
-## How will I be evaluated
-Good question. We want to know the following:
-- The efficacy of the system you design to create a good story
-- Are you comfortable using and writing a python script
-- What kinds of prompting strategies and agent design strategies do you use
-- Are the stories your tool creates good?
-- Can you understand and deconstruct a problem
-- Can you operate in an open-ended environment
-- Can you surprise us
-
----
-
-## Other FAQs
-- How long should I spend on this? 
-No more than 2-3 hours
-- Can I change what the input is? 
-Sure
-- How long should the story be?
-You decide
----
-
-## Running this solution
+## Running it
 
 Requires Python 3.12.
 
@@ -59,20 +15,69 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # then put your Anthropic API key in ANTHROPIC_API_KEY
-```
 
-Every call goes to the Anthropic API with Claude Haiku 5.5 (`claude-haiku-5-5`). The key is the only setup needed.
-
-Run it:
-
-```bash
 python main.py "A story about a shy dragon who loves baking"
-python main.py "..." --verbose     # also prints the per-stage summary read from the trace, and one line per feedback turn
-python main.py "..." --baseline    # single plain model call, no pipeline (for comparison)
-pytest                             # unit tests, fake LLM, no network or API key needed
+python main.py "..." --baseline    # the original single call, for comparison
+pytest                             # tests run on a fake LLM, no API key needed
 ```
 
-Feedback: each story unrolls inside a scroll, and a small night-sky scene plays while it is being written or revised. After the story, the CLI asks what to change. Type a change and press Enter, and the same story is revised. For example, `make it a little funnier`, or `the dragon should have a sister named Ember`. Type `exit` (or `quit`, `q`, `done`, a plain `no`) or press Esc to quit; Ctrl-D and Ctrl-C also end the session. Enter on an empty line just asks again. All of the look lives in `ui.py`; colour and animation only run on a terminal (`NO_COLOR=1` / `NO_ANIMATION=1` turn them off).
+After the story, the script asks what to change. Type a change (for example `make it a little funnier`) and the same story is revised. Type `exit` or press Esc to quit.
 
-- Traces: every pipeline run writes a JSON trace to `runs/` (override with `RUNS_DIR`). It holds the request, gate result, extraction, every story version with its judge verdicts and the feedback it was revised from, the guard's keep decisions, timings, token usage and cost. `--baseline` writes none.
-- Cost guard: `MAX_RUN_COST_USD` (default 0.10) stops a run once its spend passes the cap and returns a friendly message. Other knobs (`MAX_ROUNDS`, `TARGET_WORDS`, `MAX_TOKENS`, `LATENCY_BUDGET_S`) can be overridden in the shell or in `.env`. The model and endpoint are fixed in `storyteller/config.py` on purpose.
+## The system
+
+![Bedtime Storyteller: System Architecture](docs/diagrams/system-overview.png)
+
+I built the system around Haiku 5.5 with the aim of making this a reliable and safe bedtime story teller for children aged 5 to 10. On top of a single generation call, I added a few components:
+
+1. Safety and relevance check
+2. Pre-processing (extraction and categorization)
+3. Generation (stacking-block prompting)
+4. Judge and revision loop
+5. Feedback (preferences and overrides)
+
+In the diagram, I've separated the non-deterministic parts of the system from the deterministic ones: purple blocks are LLM calls, and teal blocks are plain code.
+
+### 1. Safety and relevance check
+
+Before a request reaches the rest of the system, it is checked for two things: is it actually a request for a bedtime story, and is it safe for children (no graphic violence, gore, etc.). If either check fails, the user gets a friendly message instead.
+
+While designing this, I was reminded of a funny bug in Amazon's Rufus chatbot that let you ask it pretty much anything ([tweet](https://x.com/pseudotheos/status/2029957370323870040)). Our system doesn't suffer from the same problem.
+
+### 2. Pre-processing
+
+I run a small pre-processing block before I actually generate the story. Why am I doing this? I wanted to break down the user's intent into characters, setting and premise, because I felt I could use that to adjust how the prompt is generated. For the same reason, I also extract a category, so the prompting strategy fits the kind of story being asked for. I defined 4 categories based on my own intuition and research: adventure, silly, comfort and cozy.
+
+### 3. Generation
+
+Generation uses a stacking-block approach to prompting. Instead of one big prompt, the storyteller prompt is assembled from layers: a shared base block that is always present (audience 5 to 10, safety rules, a length target of about 600 words, and the bedtime wind-down where the last third slows down and ends sleepy), then a category block that swaps in the structure and do's and don'ts for that category, then one line per variable we actually extracted (characters, setting, premise, listener). Anything the user did not specify is left to the model's own judgment rather than forced. This keeps the constants in one place and lets each category change the story's shape without rewriting the whole prompt.
+
+### 4. Judge and revision loop
+
+Once a draft is written, an LLM judge grades it against a rubric. The rubric has hard checks (safety, bedtime wind-down, characters, consistency) and soft checks (language, story arc, engagement, premise, category, length). For each check, the judge says pass or fail, and how to fix it if it failed.
+
+The failed checks go back to the storyteller as feedback, hard ones first, and it revises the story. The new draft is judged again, and a check in code keeps whichever version is better. This repeats up to 3 times, or until everything passes. If the final story still fails safety, the user gets a friendly message instead.
+
+For a detailed look at this loop, I've drawn a diagram at [docs/diagrams/judge-loop.png](docs/diagrams/judge-loop.png).
+
+### 5. Feedback
+
+After a story is delivered, the user can ask for a change, and this keeps going until they're happy. Each change goes back through the safety check and pre-processing along with the original request, so the story's details stay up to date.
+
+From the feedback I pull out two things:
+
+* Preferences: how the story should be told ("make it funnier", "a bit shorter"). These are added to the storyteller's prompt.
+* Overrides: asks that clash with a rubric check, like "end on a cliffhanger" against the bedtime wind-down. That check is switched off for this story, but safety can never be overridden.
+
+The storyteller then revises the delivered story, and it goes through the same judge loop.
+
+## Handling vague requests
+
+A user could give us anything from no info at all ("tell me a bedtime story") all the way to a detailed prompt naming all the characters, setting and premise.
+
+One challenge was vague requests with nothing named, where the system kept generating stories with the same recurring themes. To introduce variance, when there is no premise I ask the LLM for 5 different story ideas given whatever else we know, then pick one at random in code and write the story from it. Only the storyteller sees the picked idea, so the judge doesn't grade the story against something the user never asked for.
+
+In my tests on 10 vague requests, this gave 10 distinct premises. Just telling the model to "be creative" did not work: it moved to a new favourite story instead, with "Lantern" in 9 of 10 titles. What spreads the output is asking for 5 ideas in one call, where the model can see all of them at once and is told to make them different.
+
+## Baseline comparison
+
+The baseline version is the original single-call script, running on the same model. Keeping it in the tool let me compare my system against a vanilla one request by request, rather than judging my own output in a vacuum.
