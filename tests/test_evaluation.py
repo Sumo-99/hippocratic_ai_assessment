@@ -2,7 +2,7 @@ import pytest
 
 from storyteller import config, feedback, judge, prompts
 from storyteller.fake import FakeLLM
-from storyteller.models import Evaluation, JudgeResult, StorySpec, Verdict
+from storyteller.models import Character, Evaluation, JudgeResult, StorySpec, Verdict
 from string import Template
 
 DIMS = config.HARD + [d for d in config.SOFT if d != "length"]
@@ -17,7 +17,7 @@ def stub_prompts(monkeypatch):
 
 
 def spec(**kw):
-    base = dict(category="cozy", characters=["Mia"], setting="a barn", premise="p",
+    base = dict(category="cozy", characters=[Character(name="Mia", role="a mouse")], setting="a barn", premise="p",
                 worry=None)
     return StorySpec(**{**base, **kw})
 
@@ -45,7 +45,7 @@ async def test_judge_failures_reported_and_prompt_has_context():
     e = await judge.evaluate(llm, spec(), GOOD_STORY)
     assert e.hard_failures == ["safety"] and e.soft_failures == ["engagement"]
     system = llm.calls[0][1]
-    assert "Mia" in system and "cosy check" in system
+    assert "Mia (a mouse)" in system and "cosy check" in system
 
 
 async def test_length_failure_is_soft():

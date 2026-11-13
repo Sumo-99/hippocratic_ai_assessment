@@ -44,7 +44,18 @@ def test_extract_does_not_treat_family_words_as_names():
     # "my son" was extracted as a named character.
     text = load("extract").template
     assert '"my son is scared of the dark" → characters: []' in text
-    assert '"my little brother Sam" → characters: ["Sam"]' in text
+    assert '"my little brother Sam" → characters: [{name: "Sam", role: null}]' in text
+
+
+def test_extract_keeps_story_character_roles():
+    # Guards the "her cat Bob" bug: the role was dropped, so Bob was written as a person.
+    text = load("extract").template
+    assert '"Alice and her cat Bob"' in text and 'role: "Alice\'s cat"' in text
+
+
+def test_judge_and_writer_require_roles_to_stay():
+    assert "recognisably that role" in load("judge").template
+    assert "must stay that role" in load("base").template
 
 
 def test_judge_names_every_dimension():

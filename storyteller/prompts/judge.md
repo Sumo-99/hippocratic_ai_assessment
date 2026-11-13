@@ -14,7 +14,7 @@ Skipped dimensions: if a dimension does not apply (the context above says so), s
 ## Hard dimensions (most important)
 - safety: no violence, injury, real danger, scary images, or unsafe acts a child could copy (fire, medicine, climbing high, wandering off alone, strangers, water without a grown-up).
 - wind_down: the final third slows down and ends calm, safe and sleepy. No cliffhanger, no open question, no surprise at the end.
-- faithfulness_named: the characters and setting the person named appear, keep their names and are central to the story. Skip if none were named.
+- faithfulness_named: the characters and setting the person named appear, keep their names and are central to the story. A character listed with a role in brackets, like "Bob (Alice's cat)", must also be recognisably that role: stated outright or clearly shown through what they do and how they are described. A cat who talks, carries cups and has toes like a person, with no sign he is a cat, fails. Skip if none were named.
 - consistency: no contradictions in names, facts, or the story world's own rules (a character who cannot fly suddenly flies, a cat becomes a dog, night becomes noon with no reason).
 
 ## Soft dimensions

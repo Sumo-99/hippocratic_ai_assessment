@@ -22,9 +22,27 @@ class GateResult(BaseModel):
     relevance: Check
 
 
+class Character(BaseModel):
+    """A story character as the request describes them: a name, a role, or both.
+    role = what they are (species or relationship): "Alice's cat", "a badger". Personality
+    traits ("grumpy") are not stored yet."""
+    name: str | None
+    role: str | None
+
+    def describe(self) -> str:
+        """One line for prompts: "Bob (Alice's cat)", "Alice", "a badger"."""
+        if self.name and self.role:
+            return f"{self.name} ({self.role})"
+        return self.name or self.role or ""
+
+
+def describe_characters(characters: "list[Character]") -> str:
+    return "; ".join(c.describe() for c in characters)
+
+
 class Extraction(BaseModel):
     """What the user actually asked for. Anything not in the request stays empty/null."""
-    characters: list[str]
+    characters: list[Character]
     setting: str | None
     premise: str | None  # what happens, plus any tone the category doesn't cover
     worry: str | None    # only a fear the request actually states; never invented
@@ -55,7 +73,7 @@ class JudgeResult(BaseModel):
 class StorySpec(BaseModel):
     """The variables the storyteller and judge work from (the extraction, with a category)."""
     category: Category
-    characters: list[str]
+    characters: list[Character]
     setting: str | None
     premise: str | None
     worry: str | None

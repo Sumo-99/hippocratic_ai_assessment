@@ -2,7 +2,7 @@
 import re
 
 from . import config, prompts
-from .models import Evaluation, JudgeResult, StorySpec
+from .models import Evaluation, JudgeResult, StorySpec, describe_characters
 
 
 def word_count(text: str) -> int:
@@ -36,7 +36,7 @@ def _rubric_context(spec: StorySpec, skipped: set[str]) -> str:
     """Plain-text description of what the story was supposed to honour."""
     lines = [
         f"Category: {spec.category}",
-        f"Characters named by the user: {', '.join(spec.characters) or 'none'}",
+        f"Characters named by the user: {describe_characters(spec.characters) or 'none'}",
         f"Setting named by the user: {spec.setting or 'none'}",
         f"Premise: {spec.premise or 'none specified'}",
         f"Worry: {spec.worry or 'none'}",

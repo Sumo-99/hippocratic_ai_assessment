@@ -8,7 +8,7 @@ from storyteller.extract import extract, normalize
 from storyteller.fake import FakeLLM
 from storyteller.gate import check_request, gate_message
 from storyteller.generate import build_system_prompt, make_spec, revise_story, write_story
-from storyteller.models import Check, Extraction, GateResult, StorySpec
+from storyteller.models import Character, Check, Extraction, GateResult, StorySpec
 
 STUBS = {
     "base": "BASE $target_words", "cozy": "COZY", "silly": "SILLY", "adventure": "ADV",
@@ -71,17 +71,29 @@ def test_comfort_without_worry_normalized_to_cozy():
     assert normalize(ext(category="comfort", worry="thunder")).category == "comfort"
 
 
+def test_normalize_drops_empty_characters():
+    e = ext(characters=[Character(name=None, role=None), Character(name="Bob", role="a cat")])
+    assert normalize(e).characters == [Character(name="Bob", role="a cat")]
+
+
+def test_character_describe():
+    assert Character(name="Bob", role="Alice's cat").describe() == "Bob (Alice's cat)"
+    assert Character(name="Alice", role=None).describe() == "Alice"
+    assert Character(name=None, role="a badger").describe() == "a badger"
+
+
 def test_make_spec_falls_back_to_cozy_and_keeps_variables():
-    s = make_spec(ext(premise="a kite", characters=["Bo"], worry="thunder"))
-    assert s.category == "cozy" and s.premise == "a kite" and s.characters == ["Bo"]
+    s = make_spec(ext(premise="a kite", characters=[Character(name="Bo", role="a bear")], worry="thunder"))
+    assert s.category == "cozy" and s.premise == "a kite" and s.characters == [Character(name="Bo", role="a bear")]
     assert make_spec(ext(category="silly")).category == "silly"
 
 
 # ---- prompt assembly ----------------------------------------------------------------------
 
 def test_system_prompt_omits_absent_variables():
-    p = build_system_prompt(spec(characters=["Alice", "Bob"], setting="a barn"))
-    assert "Characters: Alice, Bob" in p and "Setting: a barn" in p
+    p = build_system_prompt(spec(characters=[Character(name="Alice", role=None),
+                                Character(name="Bob", role="Alice's cat")], setting="a barn"))
+    assert "Characters: Alice; Bob (Alice's cat)" in p and "Setting: a barn" in p
     for absent in ("Mood:", "Worry:", "Premise:"):
         assert absent not in p
     assert p.startswith("BASE 600") and "COZY" in p

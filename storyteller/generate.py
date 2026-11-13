@@ -1,6 +1,6 @@
 """Story generation: the spec, system prompt assembly, first draft and revision."""
 from . import config, prompts
-from .models import Extraction, StorySpec
+from .models import Extraction, StorySpec, describe_characters
 
 
 def make_spec(e: Extraction) -> StorySpec:
@@ -18,7 +18,7 @@ def build_system_prompt(spec: StorySpec) -> str:
     ]
     lines = []
     if spec.characters:
-        lines.append("Characters: " + ", ".join(spec.characters))
+        lines.append("Characters: " + describe_characters(spec.characters))
     for label, value in (("Setting", spec.setting), ("Premise", spec.premise),
                          ("Worry", spec.worry)):
         if value:

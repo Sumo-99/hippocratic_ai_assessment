@@ -10,7 +10,7 @@ import pytest
 from storyteller import config, pipeline, prompts
 from storyteller.fake import FakeLLM
 from storyteller.llm import BudgetExceeded
-from storyteller.models import (Check, DraftVersion, Evaluation, Extraction, GateResult, JudgeResult,
+from storyteller.models import (Character, Check, DraftVersion, Evaluation, Extraction, GateResult, JudgeResult,
                                 Verdict)
 
 DIMS = config.HARD + [d for d in config.SOFT if d != "length"]
@@ -37,7 +37,8 @@ def gate_no(*_):
 
 
 def extraction(*_):
-    return Extraction(characters=["Alice", "Bob"], setting=None, premise="fly to the moon",
+    return Extraction(characters=[Character(name="Alice", role=None),
+                                  Character(name="Bob", role="Alice's cat")], setting=None, premise="fly to the moon",
                       worry=None, category="adventure")
 
 
