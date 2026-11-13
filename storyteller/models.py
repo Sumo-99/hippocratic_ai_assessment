@@ -6,6 +6,12 @@ from pydantic import BaseModel
 
 # The story type: which category prompt the writer gets and which checks the judge adds.
 Category = Literal["adventure", "silly", "comfort", "cozy"]
+# The rubric checks that feedback may switch off for one story, when the ask directly conflicts
+# with one ("end on a cliffhanger" vs wind_down). Must equal config.OVERRIDABLE_CHECKS. "safety"
+# is absent on purpose: it can never be overridden, so an override cannot even name it.
+OverridableCheck = Literal["wind_down", "faithfulness_named", "consistency", "age_language",
+                           "story_arc", "engagement", "faithfulness_premise", "category_checks",
+                           "length"]
 
 
 # ---- schemas the LLM fills in (sent as strict JSON schemas) ------------------------------
@@ -41,6 +47,14 @@ def describe_characters(characters: "list[Character]") -> str:
     return "; ".join(c.describe() for c in characters)
 
 
+class Override(BaseModel):
+    """A story rule the user's own ask conflicts with, plus the narrow exception they want.
+    quote first (evidence first): code drops an override whose quote isn't in the user's text."""
+    quote: str           # the user's own words that conflict, copied exactly
+    dimension: OverridableCheck  # never "safety"
+    allow: str           # the scoped exception in plain words, e.g. "end on a cliffhanger"
+
+
 class Extraction(BaseModel):
     """What the user actually asked for. Anything not in the request stays empty/null."""
     characters: list[Character]
@@ -48,6 +62,10 @@ class Extraction(BaseModel):
     premise: str | None  # what the story is about, in the request's words (a worry goes here)
     listener: str | None  # who the story is for ("daughter", "6 year old"); not a character
     category: Category | None  # None = no category: the writer gets the base prompt alone
+    # The two fields below have Python defaults only for code and tests that build an
+    # Extraction by hand; llm._strict_schema still makes the model fill them in.
+    preferences: str | None = None  # the user's plain instructions on how to tell/change the story
+    overrides: list[Override] = []
 
 
 class Verdict(BaseModel):
@@ -95,6 +113,8 @@ class StorySpec(Extraction):
     request had no premise. Only the writer sees the idea: the judge checks faithfulness to
     what the parent asked for, never to an idea the model made up."""
     idea: StoryOption | None = None
+    # preferences and overrides come from Extraction: the feedback sits on top of the
+    # writer's prompt stack, and overrides.apply_overrides overrides what they conflict with.
 
 
 class Evaluation(BaseModel):
@@ -103,6 +123,8 @@ class Evaluation(BaseModel):
     length_ok: bool
     hard_failures: list[str]  # dimension names, skipped dimensions removed
     soft_failures: list[str]
+    # Failures ignored because the user asked for them (removed from the two lists above).
+    overridden: list[str] = []
 
     @property
     def all_passed(self) -> bool:
@@ -123,3 +145,18 @@ class PipelineResult(BaseModel):
     story: str | None
     message: str | None
     trace_path: str | None
+    # Always set. After a delivered story it holds that story; after a rejected or failed turn
+    # it is the incoming session, unchanged (so a failed change is never recorded).
+    session: "StorySession"
+
+
+class StorySession(BaseModel):
+    """One conversation: it starts with the request, and every turn either quits or adds
+    feedback. spec and story stay None until the first story is delivered."""
+    request: str
+    feedback: list[str] = []          # every piece of feedback so far, oldest first
+    spec: StorySpec | None = None     # what the delivered story was written from
+    story: DraftVersion | None = None # the delivered version; the next feedback revises this
+
+
+PipelineResult.model_rebuild()

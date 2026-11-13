@@ -4,7 +4,7 @@ from functools import lru_cache
 
 from pydantic import BaseModel, create_model
 
-from . import config, prompts
+from . import config, overrides, prompts
 from .models import (Evaluation, JudgedVerdict, JudgeResult, StorySpec, Verdict,
                      describe_characters)
 
@@ -50,6 +50,15 @@ def _reply_schema(dims: tuple[str, ...]) -> type[BaseModel]:
     return create_model("JudgeReply", **{d: (JudgedVerdict, ...) for d in dims})
 
 
+# DECISION: the precise override (live run, store/17_feedback_live_smoke). With only the coarse
+# override, other dimensions still wrote fixes such as "remove the cliffhanger" and the reviser
+# obeyed them. The exceptions travel in the rubric context, so judge.md stays a static template
+# and a request without overrides gets a byte-identical judge prompt.
+EXCEPTIONS_HEADER = ("Exceptions the feedback on this story explicitly asks for. Do not fail any dimension "
+                     "because of them, and never write a fix that removes or weakens them. "
+                     "Safety always applies in full:")
+
+
 def _rubric_context(spec: StorySpec, request: str) -> str:
     """Plain-text description of what the story was supposed to honour."""
     lines = [
@@ -59,6 +68,9 @@ def _rubric_context(spec: StorySpec, request: str) -> str:
         f"Setting named by the user: {spec.setting or 'none'}",
         f"Premise: {spec.premise or 'none specified'}",
     ]
+    allowed = overrides.active(spec.overrides)
+    if allowed:
+        lines += [EXCEPTIONS_HEADER] + [f"- {o.dimension}: {o.allow}" for o in allowed]
     return "\n".join(lines)
 
 

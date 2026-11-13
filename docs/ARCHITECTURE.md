@@ -36,6 +36,10 @@ flowchart TD
     OUT["Story printed"]:::io
     CANNED["Canned friendly message, story never shown"]:::io
     TRACE["Trace JSON in runs/: gate, extraction, every version and verdict, feedback, guard decisions, timings, tokens, cost"]:::io
+    FBIN["User feedback on the delivered story: a change, or blank / q / quit / exit / done to stop"]:::io
+    CONV["conversation_text: original request + numbered changes, newest last"]:::code
+    REEXT["Re-extraction of the whole conversation: spec, preferences, overrides (each with a quote)"]:::llm
+    FBREV["Feedback revision: round 0 starts from the delivered story plus the change"]:::llm
 
     U --> GATE
     GATE -->|"either check fails"| REJ
@@ -48,6 +52,9 @@ flowchart TD
     SAFE -->|yes| OUT
     SAFE -->|no| CANNED
     LOOP -.-> TRACE
+    SAFE -->|yes| FBIN
+    FBIN -->|"a change"| CONV --> REEXT --> FBREV --> LOOP
+    FBIN -->|"quit"| STOP["Session ends"]:::io
 
     classDef llm fill:#cfe8ff,stroke:#1f6feb,color:#0b2a55
     classDef code fill:#e6f4d7,stroke:#3b8a1f,color:#173d0a
@@ -68,7 +75,7 @@ The gate and extraction are separate calls on purpose: a request that fails the 
 flowchart TD
     PROMPT["System prompt = base + category prompt (if any) + one line per variable"]:::code
     WRITE["Storyteller: first draft (round 0)"]:::llm
-    JUDGE["Judge: fresh call, evidence then pass/fail then fix, per dimension"]:::llm
+    JUDGE["Judge: fresh call, evidence then pass/fail then fix, per dimension; code then applies overrides"]:::llm
     LEN["Length check: 400-900 words"]:::code
     PASS{"Everything passes?"}:::code
     CAP{"Revisions < MAX_ROUNDS?"}:::code
@@ -91,6 +98,20 @@ flowchart TD
     classDef code fill:#e6f4d7,stroke:#3b8a1f,color:#173d0a
     classDef io fill:#f3f3f3,stroke:#666,color:#222
 ```
+
+## Feedback turn
+
+After a story is delivered, the CLI asks for changes. Each change is one more turn on the same session, and the result is still one story (the loop is in Diagram 1).
+
+- **Text.** `conversation_text(request, feedback)` joins the original request and the numbered changes, newest last. Extraction reads that whole text, so later changes win, and a correction updates only the field it names.
+- **Session.** There is always a session. `run(request)` starts one (`StorySession(request=...)`), and every result carries it. `spec` and `story` stay `None` until a story is delivered. The turn branches on `is_feedback = feedback is not None`: the first turn writes (and asks for ideas if there is no premise), a feedback turn revises. `give_feedback` refuses a session with no story yet, and the CLI offers feedback only while `session.story` is set.
+- **Spec.** `StorySpec` inherits `preferences` and `overrides` from `Extraction`. A feedback turn keeps `idea` from the session's spec and never runs the ideas call (rule 3 is first-turn only). Since the idea fills only empty fields, anything the feedback names, including a new premise, wins over it.
+- **Preferences.** Extracted `preferences` go to the writer first, under "## Feedback on this story (this comes first)". The block says the feedback wins over the rest of the prompt, except the Safety rules. It names no parent or child: the person asking may be either.
+- **Overrides.** Extraction can override a rubric dimension. Each override has the `quote` it rests on, the `dimension`, and the `allow`ed exception. `extract()` keeps an override only if its quote appears in the conversation text as whole words, and never one for safety (`overrides.active`). Two layers then apply: the judge's request context lists the exceptions under `judge.EXCEPTIONS_HEADER`, so no check fails them or writes a fix that removes them (precise override), and `apply_overrides` overrides the whole dimension after every judge call in case the judge fails it anyway (coarse override). `judge.md` is unchanged.
+- **Guard.** When there is feedback (preferences, or any feedback turn), `keep_better` breaks hard-check ties on `faithfulness_premise`, and every loop revision's feedback ends with `feedback.KEEP_FEEDBACK`. If a revision is rejected only for dropping the change, the loop stops instead of resending identical feedback.
+- **Round 0.** The feedback revision starts from the delivered story. The change is sent to the writer as "- Feedback on this story: ...". The round is the turn's baseline and is never guard-compared with the delivered story, so the guard cannot drop the change.
+- **Failures.** If a turn is rejected, hits a safety message, errors, or runs out of budget, the incoming session is returned and the failed change is not recorded.
+- **Trace.** A feedback turn's trace has `feedback` (every change so far, `[]` on a first run), `turn` (the number of changes), `final.overridden`, and `evaluation.overridden` on each version. `request` is the original request, and `versions[0].feedback_sent` holds the change line.
 
 ## Story variables
 

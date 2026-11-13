@@ -65,10 +65,12 @@ Run it:
 
 ```bash
 python main.py "A story about a shy dragon who loves baking"
-python main.py "..." --verbose     # also prints the per-stage summary read from the trace
+python main.py "..." --verbose     # also prints the per-stage summary read from the trace, and one line per feedback turn
 python main.py "..." --baseline    # single plain model call, no pipeline (for comparison)
 pytest                             # unit tests, fake LLM, no network or API key needed
 ```
+
+Feedback: each story unrolls inside a scroll, and a small night-sky scene plays while it is being written or revised. After the story, the CLI asks what to change. Type a change and press Enter, and the same story is revised. For example, `make it a little funnier`, or `the dragon should have a sister named Ember`. Type `exit` (or `quit`, `q`, `done`, a plain `no`) or press Esc to quit; Ctrl-D and Ctrl-C also end the session. Enter on an empty line just asks again. All of the look lives in `ui.py`; colour and animation only run on a terminal (`NO_COLOR=1` / `NO_ANIMATION=1` turn them off).
 
 - Traces: every pipeline run writes a JSON trace to `runs/` (override with `RUNS_DIR`). It holds the request, gate result, extraction, every story version with its judge verdicts and the feedback it was revised from, the guard's keep decisions, timings, token usage and cost. `--baseline` writes none.
 - Cost guard: `MAX_RUN_COST_USD` (default 0.10) stops a run once its spend passes the cap and returns a friendly message. Other knobs (`MAX_ROUNDS`, `TARGET_WORDS`, `MAX_TOKENS`, `LATENCY_BUDGET_S`) can be overridden in the shell or in `.env`. The model and endpoint are fixed in `storyteller/config.py` on purpose.

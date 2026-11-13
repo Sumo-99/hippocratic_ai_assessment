@@ -8,7 +8,7 @@ CATEGORIES = ["adventure", "silly", "comfort", "cozy"]
 KEYS = {
     "base": {"target_words": "600"},
     "gate": {},
-    "extract": {},
+    "extract": {"overridable_checks": "- wind_down: ends calm and sleepy"},
     "judge": {"rubric_context": "Named characters: Milo", "category_checks": "- a check"},
     "revise": {},
     "baseline": {},
@@ -62,6 +62,31 @@ def test_extract_keeps_the_subject_as_premise_and_records_listener():
     assert "Never drop the subject" in text
     assert "including the names of animals and pets" in text
     assert "- listener:" in text and '"for my daughter" → "daughter"' in text
+
+
+def test_extract_explains_follow_up_feedback():
+    text = load("extract").template
+    assert "## Follow-up feedback" in text
+    assert "later changes win over earlier ones" in text.lower()
+    assert "- preferences:" in text and "- overrides:" in text
+    assert "quote" in text and "$overridable_checks" in text
+    # The cliffhanger phrasings map to wind_down; an exciting story alone is not a conflict.
+    assert '"to be continued"' in text and '"leave it hanging"' in text
+    assert '"an exciting adventure" → overrides: []' in text
+
+
+def test_extract_has_no_stray_dollar_signs():
+    # Task 1 substitutes $overridable_checks with string.Template; any other $ would break it.
+    text = load("extract").template
+    assert text.count("$") == 1
+
+
+def test_extract_never_lists_safety_as_overridable():
+    # DECISION: assert the explicit statement rather than the absence of the word. The prompt
+    # should tell the model outright that safety is off the table, not leave it to inference.
+    text = load("extract").template
+    assert "The safety rule can never be overridden" in text
+    assert "- safety" not in text
 
 
 def test_judge_and_writer_require_roles_to_stay():
