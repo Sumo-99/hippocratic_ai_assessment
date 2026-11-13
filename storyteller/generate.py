@@ -7,7 +7,8 @@ def make_spec(e: Extraction) -> StorySpec:
     """The extraction becomes the story's variables. No clear category -> cozy, which needs
     nothing from the request (the model invents a gentle premise itself)."""
     return StorySpec(category=e.category or config.FALLBACK_CATEGORY, characters=e.characters,
-                     setting=e.setting, premise=e.premise, worry=e.worry)
+                     setting=e.setting, premise=e.premise, worry=e.worry,
+                     listener=e.listener)
 
 
 def build_system_prompt(spec: StorySpec) -> str:

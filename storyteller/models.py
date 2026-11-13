@@ -46,6 +46,7 @@ class Extraction(BaseModel):
     setting: str | None
     premise: str | None  # what happens, plus any tone the category doesn't cover
     worry: str | None    # only a fear the request actually states; never invented
+    listener: str | None  # who the story is for ("daughter", "6 year old"); not a character
     category: Category | None
 
 
@@ -77,6 +78,7 @@ class StorySpec(BaseModel):
     setting: str | None
     premise: str | None
     worry: str | None
+    listener: str | None = None
 
 
 class Evaluation(BaseModel):

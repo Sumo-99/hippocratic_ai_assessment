@@ -7,9 +7,17 @@ Fill these fields:
   - "Luna" → {name: "Luna", role: null}
   - "a grumpy badger" → {name: null, role: "badger"}
   - "Alice and her cat Bob" → {name: "Alice", role: null}, {name: "Bob", role: "Alice's cat"}
+  - Every name the request gives keeps its place in name, including the names of animals and pets: "Tomas and his goat Biscuit" → {name: "Tomas", role: null}, {name: "Biscuit", role: "Tomas's goat"}. Never leave a given name only inside the premise.
 - setting: the place, if one is mentioned ("a lighthouse", "under the sea"). Otherwise null.
-- premise: what happens, if the request says ("a bear who can't find his hat"). Otherwise null.
+- premise: what the story is about, in a few words taken from the request. Fill it for every request that names a subject, an event, a situation or a theme, however short:
+  - "a story about a robot who loves gardening" → premise: "a robot who loves gardening"
+  - "a story about a kite festival" → premise: "a kite festival"
+  - "a story about a cat" → premise: "a cat"
+  - "a bear who can't find his hat" → premise: "a bear who can't find his hat"
+  If the subject sounds rough or scary, still record it as asked ("a story about a castle siege" → premise: "a castle siege"). The writer tells it gently later. Never drop the subject or replace it with a different one.
+  Leave premise null only when the request names no subject at all ("tell me a story", "a bedtime story for my daughter", "something calm for tonight"), or when its only content is a worry (that goes in worry).
 - worry: a fear or worry the child has ("scared of the dark", "nervous about the first day of school"). Otherwise null.
+- listener: who the story is for, if the request says: "for my daughter" → "daughter", "my son is scared of the dark" → "son", "for a 7 year old" → "7 year old", "something my kids will like" → "kids". Otherwise null. The listener is not a story character.
 - category: one of adventure, silly, comfort, gentle_lesson, cozy, or null.
 
 Rules:
@@ -17,9 +25,9 @@ Rules:
   - "a slightly spooky story about an owl in the woods" → premise: "a gently spooky night for an owl in the woods"
   - "a funny story" → category: silly, premise: null (silly already means funny)
   - "a calm story" → category: cozy, premise: null (cozy already means calm)
-- Never invent a premise for a vague request. "A story about a cat" has a character but no premise: premise is null. Only fill premise when the request says what happens.
+- Never invent a premise. Use the request's own subject, in its own words, and nothing more.
 - Use only what is in the request. If a field is not there, leave it empty or null.
-- A family or relationship word on its own is not a character name. The person asking is usually describing their own child or family, not naming a story character. Do not put these in characters:
+- A family or relationship word on its own is not a character name. The person asking is usually describing their own child or family, not naming a story character. Do not put these in characters (they go in listener):
   - "my son is scared of the dark" → characters: []
   - "a story for my daughter" → characters: []
   - "something my kids will like" → characters: []

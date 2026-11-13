@@ -39,7 +39,7 @@ def gate_no(*_):
 def extraction(*_):
     return Extraction(characters=[Character(name="Alice", role=None),
                                   Character(name="Bob", role="Alice's cat")], setting=None, premise="fly to the moon",
-                      worry=None, category="adventure")
+                      worry=None, listener=None, category="adventure")
 
 
 def generate(*_):

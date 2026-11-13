@@ -53,6 +53,16 @@ def test_extract_keeps_story_character_roles():
     assert '"Alice and her cat Bob"' in text and 'role: "Alice\'s cat"' in text
 
 
+def test_extract_keeps_the_subject_as_premise_and_records_listener():
+    # Guards the "pirate battle" run, where the subject was dropped (premise null) and the
+    # story ignored it, and the dog whose name survived only inside the premise.
+    text = load("extract").template
+    assert '"a story about a cat" → premise: "a cat"' in text
+    assert "Never drop the subject" in text
+    assert "including the names of animals and pets" in text
+    assert "- listener:" in text and '"for my daughter" → "daughter"' in text
+
+
 def test_judge_and_writer_require_roles_to_stay():
     assert "recognisably that role" in load("judge").template
     assert "must stay that role" in load("base").template

@@ -23,7 +23,8 @@ def stub_prompts(monkeypatch):
 
 
 def ext(**kw):
-    base = dict(characters=[], setting=None, premise=None, worry=None, category=None)
+    base = dict(characters=[], setting=None, premise=None, worry=None, listener=None,
+                category=None)
     return Extraction(**{**base, **kw})
 
 
@@ -86,6 +87,10 @@ def test_make_spec_falls_back_to_cozy_and_keeps_variables():
     s = make_spec(ext(premise="a kite", characters=[Character(name="Bo", role="a bear")], worry="thunder"))
     assert s.category == "cozy" and s.premise == "a kite" and s.characters == [Character(name="Bo", role="a bear")]
     assert make_spec(ext(category="silly")).category == "silly"
+
+
+def test_make_spec_carries_listener():
+    assert make_spec(ext(listener="daughter")).listener == "daughter"
 
 
 # ---- prompt assembly ----------------------------------------------------------------------
