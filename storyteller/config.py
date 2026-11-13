@@ -7,33 +7,23 @@ from dotenv import load_dotenv
 # Load .env BEFORE reading any env var below, so knobs set in .env actually take effect.
 load_dotenv()
 
-# DECISION: endpoint and model are fixed, not env-overridable. A stray shell variable such as
-# BASE_URL must never redirect the API key and prompts to another host, or swap the model.
-BASE_URL = "https://openrouter.ai/api/v1"
-MODEL = "anthropic/claude-haiku-5.5"  # used for EVERY call
-
-# Which backend clients.build_client() makes: "openrouter" (default) or "anthropic".
-# Choosing between two fixed endpoints is not the redirect the DECISION above forbids.
-PROVIDER = os.getenv("LLM_PROVIDER", "openrouter").strip().lower()
-
-# Direct Anthropic API (storyteller/llm_anthropic.py). Same model as MODEL, native ID.
-ANTHROPIC_MODEL = "claude-haiku-5-5"
-# Mirrors OpenRouter's reasoning off: no hidden (billed) thinking tokens. Haiku 5.5 accepts
-# "disabled" at its default effort; Opus 5.5 and Sonnet 5.5 reject it, so change both together.
-ANTHROPIC_THINKING = {"type": "disabled"}
-# Anthropic list price for claude-haiku-5-5 (prompts up to 100K tokens). The Anthropic API
-# returns no dollar cost, so these are the ONLY cost source on that path: change them with
-# ANTHROPIC_MODEL or the budget guard reads wrong.
-ANTHROPIC_PRICE_IN_PER_TOKEN = 0.10 / 1_000_000
-ANTHROPIC_PRICE_OUT_PER_TOKEN = 0.50 / 1_000_000
+# DECISION: endpoint and model are fixed, not env-overridable. A stray shell variable (for
+# example ANTHROPIC_BASE_URL, which the anthropic SDK would otherwise honour) must never
+# redirect the API key and prompts to another host, or swap the model.
+BASE_URL = "https://api.anthropic.com"
+MODEL = "claude-haiku-5-5"  # used for EVERY call
+# No hidden (billed) thinking tokens. Haiku 5.5 accepts "disabled" at its default effort;
+# Opus 5.5 and Sonnet 5.5 reject it, so change this together with MODEL.
+THINKING = {"type": "disabled"}
 
 MAX_ROUNDS = int(os.getenv("MAX_ROUNDS", 3))          # max revisions of the story
 TARGET_WORDS = int(os.getenv("TARGET_WORDS", 600))    # prompt says "about 500-700 words"
 WORD_RANGE = (400, 900)                               # what the code check accepts
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 2000))       # per call
 MAX_RUN_COST_USD = float(os.getenv("MAX_RUN_COST_USD", 0.10))  # budget guard per run
-# OpenRouter list price for anthropic/claude-haiku-5.5 (checked 2026-11-11), used only as a
-# fallback cost estimate when a response has no usage.cost.
+# Anthropic list price for claude-haiku-5-5, prompts up to 100K tokens (checked 2026-11-13).
+# The API returns token counts but no dollar cost, so these are the ONLY cost source: change
+# them with MODEL or the budget guard reads wrong.
 PRICE_IN_PER_TOKEN = 0.10 / 1_000_000
 PRICE_OUT_PER_TOKEN = 0.50 / 1_000_000
 LATENCY_BUDGET_S = int(os.getenv("LATENCY_BUDGET_S", 60))

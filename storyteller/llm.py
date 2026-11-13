@@ -1,18 +1,12 @@
-"""LLM clients with retries, usage capture and a budget guard.
-
-BaseLLMClient owns everything that does not depend on the provider (retry loop, validation,
-budget guard, usage callback). Each subclass makes exactly one HTTP call in `_call` and
-translates its SDK's errors into RetryableError (try again) or LLMError (give up).
-OpenRouterClient lives here; AnthropicClient lives in llm_anthropic.py. Only clients.py
-chooses between them.
-"""
+"""Anthropic Messages API client (via the anthropic SDK) with retries, usage capture and a
+budget guard. Only clients.build_client() constructs it; everything else sees LLMClient."""
 import asyncio
 import os
 import time
 from typing import Any, Callable, Protocol, TypeVar
 
-import openai
-from openai import AsyncOpenAI
+import anthropic
+from anthropic import AsyncAnthropic
 from pydantic import BaseModel, ValidationError
 
 from . import config
@@ -28,10 +22,6 @@ class BudgetExceeded(Exception):
     """The summed cost of this run passed config.MAX_RUN_COST_USD."""
 
 
-class RetryableError(Exception):
-    """A transient failure (connection, timeout, 429, 5xx) that the retry loop may try again."""
-
-
 class LLMClient(Protocol):
     async def text(self, system: str, user: str, *, stage: str) -> str: ...
     async def structured(self, system: str, user: str, schema: type[T], *, stage: str) -> T: ...
@@ -41,8 +31,8 @@ def _strict_schema(node: Any) -> Any:
     """Make pydantic's JSON schema acceptable to strict mode: every object gets
     additionalProperties=false and lists all its properties as required; 'default' is dropped."""
     # DECISION: post-process pydantic's schema ourselves instead of trusting it as-is, because
-    # strict mode demands additionalProperties:false and all-required. Alternative: openai's
-    # to_strict_json_schema helper (ties us to an SDK internal).
+    # strict mode demands additionalProperties:false and all-required. Alternative: an SDK
+    # helper (ties us to an SDK internal).
     if isinstance(node, dict):
         node = {k: _strict_schema(v) for k, v in node.items() if k != "default"}
         if node.get("type") == "object" and "properties" in node:
@@ -53,10 +43,16 @@ def _strict_schema(node: Any) -> Any:
     return node
 
 
-class BaseLLMClient:
-    """Provider-neutral half of a client. Subclasses implement `_call` only."""
-
-    def __init__(self, on_usage: Callable | None = None):
+class AnthropicClient:
+    def __init__(self, api_key: str | None = None, on_usage: Callable | None = None):
+        # .env was already loaded by config.py at import time.
+        key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        if not key:
+            raise RuntimeError("ANTHROPIC_API_KEY not set")
+        # DECISION: base_url passed explicitly, so an ANTHROPIC_BASE_URL env var can't redirect
+        # the key and prompts. max_retries=0 because _with_retries already retries
+        # config.RETRIES times; the SDK's own 2 retries inside that loop would multiply attempts.
+        self._client = AsyncAnthropic(api_key=key, base_url=config.BASE_URL, max_retries=0)
         self.on_usage = on_usage  # called as (stage, prompt_tokens, completion_tokens, cost, seconds)
         self.total_cost = 0.0     # summed over this client's lifetime = one run
 
@@ -70,88 +66,59 @@ class BaseLLMClient:
         last: Exception | None = None
         for attempt in range(config.RETRIES):
             try:
-                content = await self._call(system, user, schema, stage)
+                content = await self._raw_call(system, user, schema, stage)
                 # Validation sits inside the retry loop: bad JSON is retried like an API error.
                 return content if schema is None else schema.model_validate_json(content)
-            except (RetryableError, ValidationError) as e:  # LLMError / BudgetExceeded propagate
+            except anthropic.APIStatusError as e:
+                # DECISION: 4xx (except 429) is our bug, a bad key or a rejected schema;
+                # retrying just burns time.
+                if e.status_code < 500 and e.status_code != 429:
+                    raise LLMError(f"{stage}: HTTP {e.status_code}: {e}") from e
+                last = e
+            except (anthropic.APIError, ValidationError) as e:  # connection, timeout, bad JSON
                 last = e
             if attempt < config.RETRIES - 1:
                 await asyncio.sleep(2 ** attempt)
         raise LLMError(f"{stage}: failed after {config.RETRIES} attempts: {last}") from last
 
-    def _check_budget(self) -> None:
+    async def _raw_call(self, system, user, schema, stage) -> str:
         if self.total_cost >= config.MAX_RUN_COST_USD:  # refuse to start a call once over budget
             raise BudgetExceeded(f"run cost ${self.total_cost:.4f} >= ${config.MAX_RUN_COST_USD}")
-
-    def _record_usage(self, stage: str, prompt_tokens: int, completion_tokens: int,
-                      cost: float, seconds: float) -> None:
-        self.total_cost += cost
-        if self.on_usage:
-            self.on_usage(stage, prompt_tokens, completion_tokens, cost, seconds)
-        if self.total_cost > config.MAX_RUN_COST_USD:
-            raise BudgetExceeded(f"run cost ${self.total_cost:.4f} > ${config.MAX_RUN_COST_USD}")
-
-    async def _call(self, system: str, user: str, schema: type[BaseModel] | None,
-                    stage: str) -> str:
-        """One HTTP call: _check_budget() first, _record_usage() after, return the raw text.
-        Raise RetryableError for transient failures and LLMError for fatal ones."""
-        raise NotImplementedError
-
-
-class OpenRouterClient(BaseLLMClient):
-    def __init__(self, api_key: str | None = None, on_usage: Callable | None = None):
-        # .env was already loaded by config.py at import time.
-        key = api_key or os.getenv("OPENROUTER_API_KEY")
-        if not key:
-            raise RuntimeError("OPENROUTER_API_KEY not set")
-        super().__init__(on_usage)
-        self._client = AsyncOpenAI(base_url=config.BASE_URL, api_key=key)
-
-    async def _call(self, system, user, schema, stage) -> str:
-        self._check_budget()
-        messages = [{"role": "user", "content": user}]
-        if system:  # baseline() sends no system prompt at all, like the original main.py
-            messages.insert(0, {"role": "system", "content": system})
         kwargs: dict[str, Any] = dict(
             model=config.MODEL,
-            messages=messages,
             max_tokens=config.MAX_TOKENS,
-            # NOTE: no temperature, the model rejects it.
-            extra_body={
-                "reasoning": {"enabled": False},   # no hidden (billed) reasoning tokens
-                "usage": {"include": True},        # OpenRouter adds usage.cost
-                "provider": {"require_parameters": True},  # only providers that honor json_schema
-            },
+            thinking=config.THINKING,
+            messages=[{"role": "user", "content": user}],
+            # NOTE: no temperature (current models reject it) and no effort (model default).
         )
+        if system:  # baseline() sends no system prompt at all, like the original main.py
+            kwargs["system"] = system
         if schema is not None:
-            kwargs["response_format"] = {
+            kwargs["output_config"] = {"format": {
                 "type": "json_schema",
-                "json_schema": {
-                    "name": schema.__name__,
-                    "strict": True,
-                    "schema": _strict_schema(schema.model_json_schema()),
-                },
-            }
+                "schema": _strict_schema(schema.model_json_schema()),
+            }}
         start = time.monotonic()
-        try:
-            resp = await self._client.chat.completions.create(**kwargs)
-        except openai.APIStatusError as e:
-            # DECISION: 4xx (except 429) is our bug or a bad key; retrying just burns time.
-            if e.status_code < 500 and e.status_code != 429:
-                raise LLMError(f"{stage}: HTTP {e.status_code}: {e}") from e
-            raise RetryableError(e) from e
-        except openai.APIError as e:  # connection, timeout
-            raise RetryableError(e) from e
+        resp = await self._client.messages.create(**kwargs)
         seconds = time.monotonic() - start
 
         usage = resp.usage
         if usage is None:  # can't track spend without it, so fail loudly instead of guessing
             raise LLMError(f"{stage}: response had no usage data")
-        cost = float(getattr(usage, "cost", 0.0) or 0.0)  # extra field, not in the SDK's typed model
-        if cost == 0.0:
-            # DECISION: if OpenRouter omits usage.cost, estimate it from token counts so the
-            # budget guard still works instead of silently reading every call as free.
-            cost = (usage.prompt_tokens * config.PRICE_IN_PER_TOKEN
-                    + usage.completion_tokens * config.PRICE_OUT_PER_TOKEN)
-        self._record_usage(stage, usage.prompt_tokens, usage.completion_tokens, cost, seconds)
-        return resp.choices[0].message.content or ""
+        # The API returns no dollar cost: price the token counts at the list price in config.
+        cost = (usage.input_tokens * config.PRICE_IN_PER_TOKEN
+                + usage.output_tokens * config.PRICE_OUT_PER_TOKEN)
+        self.total_cost += cost
+        if self.on_usage:
+            self.on_usage(stage, usage.input_tokens, usage.output_tokens, cost, seconds)
+        if self.total_cost > config.MAX_RUN_COST_USD:
+            raise BudgetExceeded(f"run cost ${self.total_cost:.4f} > ${config.MAX_RUN_COST_USD}")
+
+        if resp.stop_reason == "refusal":
+            # DECISION: fatal, not retried. Haiku 5.5 has no server-side fallback, and the same
+            # request would most likely be refused again (and billed again). Usage is recorded
+            # above first, because a refused call can still be billed.
+            category = getattr(resp.stop_details, "category", None)
+            raise LLMError(f"{stage}: model refused (category: {category})")
+        # Return the first text block; thinking or other blocks may come before it.
+        return next((b.text for b in resp.content if b.type == "text"), "")

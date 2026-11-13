@@ -227,7 +227,7 @@ async def test_trace_written_even_when_run_raises():
 
 async def test_missing_key_still_writes_trace(monkeypatch):
     def no_key(**_):
-        raise RuntimeError("OPENROUTER_API_KEY not set")
+        raise RuntimeError("ANTHROPIC_API_KEY not set")
     monkeypatch.setattr(pipeline, "build_client", no_key)
     with pytest.raises(RuntimeError):
         await pipeline.run("a dragon")
