@@ -147,6 +147,31 @@ async def test_the_walkthrough_example():
     assert result.status == "story" and trace["final"]["all_passed"]
 
 
+# ---- vague requests get a seed -------------------------------------------------------------
+
+def vague_extraction(*_):
+    return Extraction(characters=[], setting=None, premise=None, worry=None, listener="son",
+                      category=None)
+
+
+async def test_vague_request_gets_a_logged_seed_in_the_prompt(monkeypatch):
+    monkeypatch.setattr(config, "STORY_SEED", "7")
+    llm = FakeLLM({"gate": [gate_ok], "extract": [vague_extraction], "generate": [generate],
+                   "judge": [judge_from(lambda t: set())]})
+    result = await pipeline.run("tell me a story", llm)
+    trace = read_trace(result)
+    assert trace["spec"]["category"] == "cozy" and trace["seed"]["rng_seed"] == "7"
+    assert trace["spec"]["seed"] == trace["seed"]["text"]
+    generate_system = next(c[1] for c in llm.calls if c[0] == "generate")
+    assert f"Story idea: {trace['seed']['text']}" in generate_system
+
+
+async def test_request_with_a_premise_gets_no_seed():
+    llm = fake(judge_from(lambda t: set()))
+    trace = read_trace(await pipeline.run("Alice and her cat Bob fly to the moon", llm))
+    assert "seed" not in trace and trace["spec"]["seed"] is None
+
+
 # ---- the regression guard (pure code) -----------------------------------------------------
 
 def version(rnd, hard=()):

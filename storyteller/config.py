@@ -24,7 +24,10 @@ PRICE_OUT_PER_TOKEN = 0.50 / 1_000_000
 LATENCY_BUDGET_S = int(os.getenv("LATENCY_BUDGET_S", 60))
 RETRIES = int(os.getenv("RETRIES", 3))
 
-FALLBACK_CATEGORY = "cozy"  # used when the request has no clear category
+FALLBACK_CATEGORY = "cozy"  # used only when the request names nothing at all
+# Fixed RNG seed for the vague-request story seed (seeds.pick_seed). Unset = random each run;
+# set it for eval runs so they are reproducible.
+STORY_SEED = os.getenv("STORY_SEED") or None
 RUNS_DIR = os.getenv("RUNS_DIR", "runs")
 
 # Judge dimensions. HARD failures block a story; SOFT ones only trigger revision.

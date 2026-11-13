@@ -7,7 +7,9 @@ from storyteller import prompts
 from storyteller.extract import extract, normalize
 from storyteller.fake import FakeLLM
 from storyteller.gate import check_request, gate_message
-from storyteller.generate import build_system_prompt, make_spec, revise_story, write_story
+from storyteller.generate import (build_system_prompt, is_vague, make_spec, revise_story,
+                                  write_story)
+from storyteller.seeds import SEEDS, pick_seed
 from storyteller.models import Character, Check, Extraction, GateResult, StorySpec
 
 STUBS = {
@@ -133,3 +135,29 @@ async def test_write_and_revise():
     assert stage == "revise" and system.startswith(build_system_prompt(sp))
     assert system.endswith("REVISE") and "Worry: thunder" in system
     assert "story" in user and "shorter" in user
+
+
+# ---- seeds for vague requests -------------------------------------------------------------
+
+def test_is_vague_only_for_cozy_with_nothing_named():
+    assert is_vague(spec())
+    assert not is_vague(spec(premise="a kite"))
+    assert not is_vague(spec(worry="thunder"))
+    assert not is_vague(spec(category="silly"))
+
+
+def test_pick_seed_is_reproducible_with_a_fixed_rng_seed():
+    a = pick_seed("tell me a story", "42")
+    assert a == pick_seed("tell me a story", "42")
+    picks = {pick_seed(r, "42") for r in ("a", "b", "c", "d", "e", "f", "g", "h")}
+    assert len(picks) > 1  # different requests get independent picks
+
+
+def test_seeds_avoid_the_default_story_motifs():
+    assert len(SEEDS) >= 12
+    for s in SEEDS:
+        assert "cocoa" not in s and "goodnight" not in s and "good night" not in s
+
+
+def test_system_prompt_includes_story_idea():
+    assert build_system_prompt(spec(seed="an owl librarian")).endswith("Story idea: an owl librarian")

@@ -88,6 +88,7 @@ class StorySpec(BaseModel):
     premise: str | None
     worry: str | None
     listener: str | None = None
+    seed: str | None = None  # calm starting situation picked in code for vague requests
 
 
 class Evaluation(BaseModel):

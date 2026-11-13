@@ -11,10 +11,11 @@ from . import config
 from .extract import extract
 from .feedback import build_feedback
 from .gate import check_request, gate_message
-from .generate import make_spec, revise_story, write_story
+from .generate import is_vague, make_spec, revise_story, write_story
 from .judge import evaluate
 from .llm import BudgetExceeded, LLMClient, OpenRouterClient
 from .models import DraftVersion, PipelineResult, StorySpec
+from .seeds import pick_seed
 from .trace import Trace
 
 CANNED_SAFETY_MESSAGE = (
@@ -96,6 +97,10 @@ async def _run(request: str, llm, trace: Trace) -> PipelineResult:
         e = await extract(llm, request)
     trace.set("extraction", e.model_dump())
     spec = make_spec(e)
+    if is_vague(spec):  # vague request: one random calm situation, so stories don't converge
+        index, seed = pick_seed(request, config.STORY_SEED)
+        spec = spec.model_copy(update={"seed": seed})
+        trace.set("seed", {"index": index, "text": seed, "rng_seed": config.STORY_SEED})
 
     # 3. Write, judge and revise.
     final = await write_and_revise(llm, spec, trace, request)

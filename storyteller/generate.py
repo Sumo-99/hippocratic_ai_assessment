@@ -18,6 +18,12 @@ def make_spec(e: Extraction) -> StorySpec:
                      listener=e.listener)
 
 
+def is_vague(spec: StorySpec) -> bool:
+    """Nothing named and nothing to address: the story will be cozy and needs a seed."""
+    return spec.category == "cozy" and not (spec.characters or spec.setting or spec.premise
+                                            or spec.worry)
+
+
 def build_system_prompt(spec: StorySpec) -> str:
     """Base prompt + category bundle + one line per variable that is actually present."""
     parts = [prompts.load("base").substitute(target_words=config.TARGET_WORDS)]
@@ -27,7 +33,8 @@ def build_system_prompt(spec: StorySpec) -> str:
     if spec.characters:
         lines.append("Characters: " + describe_characters(spec.characters))
     for label, value in (("Setting", spec.setting), ("Premise", spec.premise),
-                         ("Worry", spec.worry), ("Listener", spec.listener)):
+                         ("Worry", spec.worry), ("Listener", spec.listener),
+                         ("Story idea", spec.seed)):
         if value:
             lines.append(f"{label}: {value}")
     if lines:
