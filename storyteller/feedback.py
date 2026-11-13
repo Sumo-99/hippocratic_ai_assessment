@@ -5,9 +5,9 @@ from .models import Evaluation
 
 def build_feedback(ev: Evaluation) -> str:
     # Fix the serious problems first; soft notes only appear once no hard check fails.
-    names = ev.hard_failures or ev.soft_failures
+    failures = ev.hard_failures or ev.soft_failures
     bullets = []
-    for name in names:
+    for name in failures:
         if name == "length":
             lo, hi = config.WORD_RANGE
             bullets.append(f"- length: the story is {ev.word_count} words; "
