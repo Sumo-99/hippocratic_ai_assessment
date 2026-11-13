@@ -32,6 +32,33 @@ Simplified so each rule lives in one place and the system can be stated in three
 - **No cozy fallback.** `FALLBACK_CATEGORY` and `make_spec` are gone: no category means the base prompt alone, even for "tell me a story" (the 5 ideas give it a plot). Untested live; the base prompt's bedtime shape and the judge's `wind_down` check keep endings calm.
 - **One check per condition.** "Is there a premise?" is checked only in `pipeline._run`; "is there a category?" only where a category prompt is loaded (writer prompt, judge skip). `StorySpec` is the extraction plus the picked idea.
 
+## User feedback (2026-11-13)
+
+After a story is delivered, the user can ask for changes, and each change is a turn on the same story (flow in `ARCHITECTURE.md`, "Feedback turn"). Decisions:
+- **Coarse override.** An override clears a whole rubric dimension, not one check inside it. The judge prompt stays static and does not learn about overrides (`overrides.apply_overrides`). Alternative: a precise override inside the judge prompt (deferred).
+- **Quote check in code.** An override counts only if its `quote` appears in the conversation text, compared case- and whitespace-insensitively, whole words only (`extract.quoted`). The prompt asks for exact spelling, so the code is looser than the prompt. Alternative: case-sensitive matching (open, see the eval backlog).
+- **Safety is outside the feedback's precedence and is never overridden.** The feedback block beats base, category and variables, but not the Safety rules (`generate.py:7`). Alternative: no exception, rejected because it invites a writer/judge conflict on safety.
+- **Framed as "feedback on this story"**, not anyone's wishes (`generate.PREFERENCES_HEADER`): the person asking may be a parent or a child. (Earlier wording, "the parent's wishes", was dropped in review.)
+- **A change that gets an override also goes into `preferences`**, so the writer still follows it. Tone changes from feedback go to `preferences`; tone words in the original request keep the old tone-to-premise/category rule.
+- **The feedback revision starts from the delivered story** (`pipeline.write_and_revise`). Its round 0 is never guard-compared with the delivered story. Alternative: let the guard keep the old story, rejected because it would silently drop the user's change.
+- **Rule 3 runs on the first turn only.** A feedback turn keeps `idea` and never asks for ideas again (`pipeline._run`), even if the conversation still has no premise. The idea fills only empty fields, so feedback that adds a premise replaces the idea's situation. Alternative: re-pick, which would throw the story away.
+- **Budget exhaustion keeps the session** (`pipeline._turn`): `BudgetExceeded` on a feedback turn returns the incoming session.
+- **Always a session** (author, review step 2). The conversation starts as a session with the request; whether a turn is a feedback turn is `feedback is not None`, not whether a session exists. Trade: `StorySession.spec`/`story` are optional until the first story, so `give_feedback` checks for a story. Terminology: "override" is the one word for a rubric check feedback switches off (`OverridableCheck`, `config.OVERRIDABLE_CHECKS`, `Evaluation.overridden`); "waive" was dropped.
+- **Failed changes are not recorded.** On a rejected, safety-blocked or errored turn, the session is the incoming one.
+- **Blank feedback is filtered in the CLI, not in `give_feedback`.** Quit words are blank, `q`, `quit`, `exit` and `done` (any case, surrounding spaces ignored), plus end of input (`main.py`).
+- **No category carryover** (ported 2026-11-13 onto the three-rule skeleton). The old build kept the category when feedback left it unclear, but that only protected the cozy fallback, which is gone. Re-extracting the whole conversation is the one source of truth; feedback can change the category ("make it funnier" → silly).
+- **Override quotes match whole words** (`extract.quoted`): `end` does not match inside `friend`.
+- **The CLI treats a plain "no" as quit** (`main.is_quit`: no, nope, no thanks, nothing, that's all, stop), so a happy user never pays for a rewrite. An `LLMError` on a feedback turn prints a retry line and keeps the last good story. Ctrl-C ends quietly.
+- **The loop protects the parent's change** (live finding, `store/17_feedback_live_smoke`). The coarse override covered only `wind_down`, but `category_checks` and `story_arc` also expect a calm ending, and their fixes ("make the ending sleepy") undid an overridden cliffhanger. Two code-only fixes, both active whenever the spec has `preferences` or it is a feedback turn (so up-front asks get them too):
+  - The guard breaks ties on hard checks with `faithfulness_premise` (`pipeline.PROTECT_FEEDBACK`), so a revision that drops the change can't replace one that kept it. Hard checks still come first.
+  - Every loop revision's feedback ends with `feedback.KEEP_FEEDBACK` ("Keep the earlier feedback on this story: …; if a change above would undo any of it, keep the feedback").
+  - Live re-run: the guard delivered the cliffhanger. The keep-wishes line did *not* hold when the judge's fix named the cliffhanger outright ("remove the … cliffhanger"), so all 3 loop rounds were wasted on the same conflicting fix. The precise override (exceptions in the judge's context) is the real fix. A code-side stop on repeated identical feedback would at least cap the waste.
+  - **Precise override now built** (author-approved after the re-run). `judge._rubric_context` appends `judge.EXCEPTIONS_HEADER` plus one `- dimension: allow` line per active override (never safety, via `overrides.active`). No dimension may fail or "fix" the exception. `judge.md` is unchanged, and a request without overrides gets a byte-identical judge prompt. The coarse guard override stays as a backstop.
+  - **Stop on a dropped change.** When the guard rejects a revision only because it lost the parent's change (tied on hard checks, worse on `faithfulness_premise`), the loop stops (`guard[-1].stopped`), because the next round would resend identical feedback. A rejection for a new hard failure still retries (`test_the_walkthrough_example`).
+  - Live check: the cliffhanger turn passed in round 0 (4 calls, $0.0025, against 10 calls, $0.0085 before). The judge still failed `wind_down` itself despite the exception, and the coarse override absorbed it, so both layers stay.
+  - Limitation: `faithfulness_premise` is skipped when the spec has no premise ("tell me a story" + "end on a cliffhanger"). There, only the keep-wishes line protects the change. Unskipping it when preferences exist would mean changing `judge.skipped_dimensions` (the judge is frozen for v1).
+- **Deferred:** a per-conversation cost cap (today `MAX_RUN_COST_USD` caps each turn, because each turn gets a fresh client); the gate (unchanged) judges the whole conversation text, so unsafe feedback is caught, but off-topic feedback ("what's 2+2?") can still pass relevance because the original request around it is a story request.
+
 ## DECISION entries (in code)
 
 1. **`storyteller/llm.py:32` strict schema.** Chosen: post-process pydantic's JSON schema ourselves (`additionalProperties: false`, all fields required, drop `default`). Alternative: openai's `to_strict_json_schema` helper, which ties us to an SDK internal.
@@ -61,10 +88,9 @@ Each of these is implemented on `skeleton_extensive` unless marked otherwise.
 
 - **Breadth for vague requests:** a premise brainstorm that writes three distinct drafts (cozy, adventure, silly) and picks one.
 - **LLM pairwise comparison**, asked in both orders to cancel position bias, to break ties between versions and to select across drafts.
-- **A safety fallback draft:** one fresh cozy draft before giving up with the canned message (`TODO(safety-fallback)`).
-- **Critique check** (not built anywhere): an open-ended "what would a parent dislike?" pass after the rubric (`TODO(critique-check)`).
-- **User feedback** (not built anywhere): ask the listener what they thought and revise (`TODO(user-feedback)` in `main.py`).
-- **Edgy-request policy** (not built anywhere): what the gate should do with "a dragon who eats villagers" (`TODO(edgy-requests)` in `gate.py`).
+- **A safety fallback draft:** one fresh cozy draft before giving up with the canned message (would go in `pipeline._run`, step 5).
+- **Critique check** (not built anywhere): an open-ended "what would a parent dislike?" pass after the rubric (would go in `pipeline.write_and_revise`, after the round-0 judge).
+- **Edgy-request policy** (not built anywhere): what the gate should do with "a dragon who eats villagers" (would go in `gate.py` / `prompts/gate.md`).
 - **An eval harness** (not built anywhere): run a request set through `pipeline.run` and `pipeline.baseline`, judge both, and compare.
 
 ## Accepted limits
@@ -85,3 +111,6 @@ Each of these is implemented on `skeleton_extensive` unless marked otherwise.
 4. **Vague requests now get a random pick from 5 model-made options.** Check variety over repeat runs of the same request, whether the theme steer stops the option lists repeating across requests (names such as Pip come from the options call, which has no name guidance), and that non-cozy vague requests ("a silly story") get ideas of that category.
 5. **Tone without a mood field.** Check that requests like "a slightly spooky owl story" or "an exciting space story" keep their tone through the premise and category.
 6. **The writer undershoots the length target.** First drafts were 435, 375 and 476 words against a 600-word target (400–900 accepted). One draft failed the length check and was fixed by a revision. Consider raising the target in `base.md`, or watch whether this costs revision rounds.
+7. **Over-eager overrides (feedback, not run live).** The extract prompt's false-positive behaviour is untested with Haiku. Expect `overrides: []` for "an exciting adventure", "make it funnier" and "scarier", and a `wind_down` override for "a cliffhanger" and "to be continued".
+8. **Whether preferences are honoured.** After a change such as "make it funnier" or "a cliffhanger", check the revised story shows it, and that a wish that would break safety never does.
+9. **Judge request display on feedback turns.** The judge's `request` is the multi-line conversation text, printed with `!r` in `judge._rubric_context`, so newlines show as `\n`. `judge.py` is frozen by the plan, so check in a live run whether this confuses the judge.
