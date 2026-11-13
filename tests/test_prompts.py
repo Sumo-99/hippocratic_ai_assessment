@@ -90,7 +90,9 @@ def test_no_concrete_story_examples_leak_into_prompts(name):
     # test found cozy stories full of the cozy prompt's own examples).
     text = load(name).template.lower()
     for word in ("cocoa", "little boat", "moon is a friend", "lullaby", "milo",
-                 "dragon who eats", "can become a race"):
+                 "dragon who eats", "can become a race",
+                 # random-category run: adventure and silly stories copied these
+                 "river to cross", "riddle", "cow who wants to fly", "teapot", "boing"):
         assert word not in text, f"{name}.md contains example text {word!r}"
 
 
