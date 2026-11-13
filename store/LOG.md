@@ -27,3 +27,21 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-12 | 09_simplify | handoff | trimmed to one draft + code-only guard; full build kept on skeleton_extensive; 67 passed
 2026-11-12 | 09_simplify | fixed | dropped mood (tone -> category/premise; rubric item faithfulness_premise); gate = safety + relevance Checks; 67 passed
 2026-11-12 | 09_simplify | live-call | 3 runs on simplified build, total $0.0060, all PASS (1 revision on named_characters: story_arc+length); runs/samples replaced
+2026-11-13 | 11_feedback_contracts | planned | branch user_feedback_feature from skeleton; plan docs/plans/2026-11-13-user-feedback.md; stages 11-16 contracts written
+2026-11-13 | 11_feedback_contracts | handoff | Waivable/Override/StorySession + new fields; 98 passed
+2026-11-13 | 12,13,14 | dispatched | parallel: sonnet overrides, opus prompts, opus loop
+2026-11-13 | 12_feedback_overrides | handoff | overrides.py + extract quote check; 30 passed (test_overrides + test_stages)
+2026-11-13 | 13_feedback_prompts | handoff | extract.md feedback/preferences/overrides + parent's-wishes block first in build_system_prompt; 63 passed (test_prompts + test_stages)
+2026-11-13 | 14_feedback_loop | handoff | run->session, give_feedback, conversation_text, CLI loop; 22 flow + 16 CLI tests; 155 passed
+2026-11-13 | 15_feedback_docs | handoff | ARCHITECTURE feedback loop + Feedback turn section; OPEN_QUESTIONS user feedback decisions + eval items 7-9; README feedback usage (docs only)
+2026-11-13 | 16_feedback_review | handoff | R1-R11 all met (R4 guard-ranking unpinned); 2 medium (category lost on feedback after vague request; 'no' not a quit word), 4 low; 155 passed
+2026-11-13 | 16_feedback_review | resolved | fixed M1, M2, L1, L2, L4; L3 deferred; 169 passed; code uncommitted for author review
+2026-11-13 | 17_feedback_live_smoke | live-call | 1 request + 2 feedback turns, 20 calls, $0.0145; found: loop undoes waived cliffhanger via category_checks/story_arc fixes (delivered story ends asleep)
+2026-11-13 | 17_feedback_live_smoke | fixed | guard protects faithfulness_premise when wishes/feedback + KEEP_WISHES line in loop feedback; 176 passed; not re-run live
+2026-11-13 | 17_feedback_live_smoke | live-call | re-run after fix, 18 calls, $0.0130 (live total $0.0275): guard delivered the cliffhanger; keep-wishes line overridden by judge fix that names the cliffhanger; 3 wasted rounds
+2026-11-13 | 17_feedback_live_smoke | fixed | precise waiver (exceptions in judge rubric context) + stop when revision only drops the parent's change; 182 passed
+2026-11-13 | 17_feedback_live_smoke | live-call | precise waiver check, 12 calls, $0.0066: cliffhanger delivered in round 0 (4 calls); judge still fails wind_down itself, coarse waiver absorbs it; stage total $0.0341
+2026-11-13 | 18_feedback_port | handoff | feedback feature re-based onto skeleton a084a1a (three rules); 6 conflicts resolved, category carryover dropped, rule 3 first-turn only; 177 passed; old work kept as patch + stash
+2026-11-13 | 18_feedback_port | live-call | 3-turn smoke on new base, 14 calls, $0.0081: cliffhanger delivered (round 1, keep-wishes line held against a conflicting category_checks fix); rule 3 not exercised (premise extracted)
+2026-11-13 | 18_feedback_port | live-call | no-premise smoke (Alice and her cat Bob -> cliffhanger), 9 calls, $0.0040: rule 3 fired, idea carried over, no re-pick, cliffhanger in round 0
+2026-11-13 | 19_feedback_review_fixes | handoff | waive->override (OverridableCheck), always-a-session (is_feedback), feedback framing, TODOs out of .py; 179 passed
