@@ -49,3 +49,4 @@ Format: `YYYY-MM-DD HH:MM | stage | event | detail`. Events: dispatched, handoff
 2026-11-13 | 19_feedback_review_fixes | cli | all UI moved to root ui.py (main.py = flow); banner, captions, unfolding scroll, night-sky loading scene, markdown strip; 210 passed
 2026-11-13 | 20_anthropic_invocation | start | worktree anthropic_invocation from skeleton 8ce1517; anthropic 2.8.0 installed; baseline 210 passed
 2026-11-13 | 20_anthropic_invocation | code | BaseLLMClient + AnthropicClient + build_client + pipeline swap + docs; 237 passed; test_llm.py untouched; code uncommitted pending review
+2026-11-13 | 20_anthropic_invocation | review | no blocking findings; real-SDK offline serialization check passed; waiting on user for key + live-smoke OK
